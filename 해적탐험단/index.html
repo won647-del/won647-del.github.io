@@ -1,0 +1,1426 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2a8dc9">
+<title>해적탐험단!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sand:#f3dfae; --sand2:#e9cd8c; --wood:#7a4a24; --wood2:#5a3416; --sea:#2f9fd6; --sea2:#1f78b4;
+  --ink:#3b2412; --paper:#fff8e7; --red:#e5483b; --green:#2fb35a; --yellow:#f4c414; --blue:#2f86d6;
+  --gold:#ffcc33;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{touch-action:manipulation;-webkit-text-size-adjust:100%}
+html,body{margin:0;height:100%;}
+body{font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:var(--ink);
+  background:radial-gradient(circle at 50% 0%,#5cc6f2 0%,#2a8dc9 55%,#1b5f93 100%);overflow:hidden;user-select:none}
+button{font-family:inherit;cursor:pointer}
+.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px}
+.screen.on{display:flex}
+.spr{background-image:url(assets/sprites.png);background-size:600% 600%;background-repeat:no-repeat}
+
+/* top-right controls */
+#topbar{position:fixed;top:10px;right:10px;z-index:50;display:flex;gap:8px}
+.chip{background:var(--paper);border:3px solid var(--wood);border-radius:999px;padding:6px 12px;font-size:16px;
+  box-shadow:0 3px 0 var(--wood2);color:var(--ink)}
+.chip.active{background:var(--gold)}
+.chip:active{transform:translateY(2px);box-shadow:0 1px 0 var(--wood2)}
+
+/* buttons */
+.btn{background:linear-gradient(#ffd75a,#f3a91d);border:4px solid var(--wood2);border-radius:18px;
+  padding:12px 26px;font-size:24px;color:var(--wood2);box-shadow:0 6px 0 var(--wood2);transition:transform .08s}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--wood2)}
+.btn.sec{background:linear-gradient(#fff8e7,#f0dcae)}
+.btn.small{font-size:18px;padding:8px 16px;border-width:3px;box-shadow:0 4px 0 var(--wood2)}
+.btn:disabled{filter:grayscale(.8);opacity:.6;cursor:default}
+
+/* TITLE */
+#title{flex-direction:column;text-align:center}
+.waves{position:fixed;left:0;right:0;bottom:0;height:120px;pointer-events:none;
+  background:repeating-radial-gradient(circle at 50% 160%,rgba(255,255,255,.25) 0 6px,transparent 6px 40px)}
+.logo{font-size:clamp(54px,12vw,120px);color:var(--gold);letter-spacing:2px;line-height:1;
+  -webkit-text-stroke:6px var(--wood2);paint-order:stroke fill;text-shadow:0 8px 0 var(--wood2),0 14px 18px rgba(0,0,0,.35);
+  transform:rotate(-3deg);margin:6px 0 4px}
+.sub{color:#fff;font-size:clamp(16px,3.4vw,24px);text-shadow:0 2px 0 rgba(0,0,0,.35);margin-bottom:14px}
+.titleArt{position:relative;width:min(520px,90vw);height:min(200px,34vw);margin:6px auto 10px}
+.titleArt .spr{position:absolute}
+.titleArt .ship{width:42%;height:100%;left:29%;top:0;animation:bob 3s ease-in-out infinite}
+.titleArt .p{width:20%;height:70%;bottom:0;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
+.menu{display:flex;flex-direction:column;gap:14px;align-items:center}
+
+/* PANEL (paper) */
+.paper{-webkit-overflow-scrolling:touch;background:var(--paper);border:5px solid var(--wood);border-radius:22px;box-shadow:0 10px 0 var(--wood2),0 20px 40px rgba(0,0,0,.35);
+  padding:18px 20px;max-width:760px;width:100%;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);overflow:auto}
+.paper h2{margin:0 0 6px;font-size:32px;text-align:center;color:var(--wood2)}
+.hint{text-align:center;color:#8a6a45;margin-bottom:12px}
+
+/* SETUP */
+.crewPick{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.pick{border:4px solid #d9c49a;border-radius:16px;background:#fff;padding:6px 4px 8px;text-align:center;cursor:pointer;position:relative;transition:transform .1s}
+.pick .spr{width:100%;aspect-ratio:1/1.1}
+.pick.sel{border-color:var(--green);background:#eaffef;transform:translateY(-4px)}
+.pick.sel::after{content:'✔';position:absolute;top:4px;right:8px;color:var(--green);font-size:22px}
+.pick input{width:100%;font-family:inherit;font-size:14px;border:2px solid #d9c49a;border-radius:8px;padding:4px;text-align:center;background:#fffdf6}
+.pick .nm{font-size:13px;color:#8a6a45;min-height:16px}
+.row{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin:16px 0}
+.seg{display:flex;border:3px solid var(--wood);border-radius:14px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:8px 16px;font-size:18px;color:var(--ink)}
+.seg button+button{border-left:3px solid var(--wood)}
+.seg button.on{background:var(--gold)}
+.diffDesc{text-align:center;color:#8a6a45;font-size:15px;min-height:20px}
+@media (max-width:560px){.crewPick{grid-template-columns:repeat(3,1fr)}}
+
+/* RULES */
+.rules{font-family:'Gaegu','Jua',sans-serif;font-size:20px;line-height:1.45}
+.rules h3{font-family:'Jua';margin:14px 0 4px;color:var(--wood2)}
+.rules .ic{display:inline-block;width:34px;height:34px;vertical-align:middle}
+.rules ul{margin:4px 0;padding-left:22px}
+
+/* GAME */
+#game{padding:10px;gap:12px;align-items:stretch}
+#boardWrap{position:relative;flex:0 0 auto;width:min(calc(100vh - 20px),calc(100vw - 360px));width:min(calc(100dvh - 20px),calc(100vw - 360px));aspect-ratio:1/1;align-self:center;
+  border:6px solid var(--wood);border-radius:20px;overflow:hidden;box-shadow:0 10px 0 var(--wood2),0 20px 40px rgba(0,0,0,.35)}
+#boardCanvas{position:absolute;inset:0;width:100%;height:100%}
+#layer{position:absolute;inset:0}
+.node{position:absolute;width:4.8%;height:4.8%;border-radius:50%;transform:translate(-50%,-50%);
+  border:3px solid rgba(90,52,22,.55);box-shadow:0 2px 0 rgba(90,52,22,.4)}
+.node.white{background:#fffdf5}
+.node.red{background:var(--red)} .node.green{background:var(--green)} .node.yellow{background:var(--yellow)} .node.blue{background:var(--blue)}
+.node.land{background:#fffdf5}
+.node.land::after{content:'✚';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#c9b99a;font-size:min(2.2vh,1.6vw)}
+.node.start{background:var(--yellow);width:6%;height:6%}
+.node.reach::before{content:'';position:absolute;inset:-48%;border-radius:50%}
+.node.reach{cursor:pointer;z-index:4;animation:pulse 0.9s ease-in-out infinite;border-color:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.85),0 0 14px 6px rgba(255,215,64,.9)}
+@keyframes pulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.22)}}
+.xmark{position:absolute;width:7%;height:7%;transform:translate(-50%,-50%);z-index:3;pointer-events:none;animation:xin .5s}
+.xmark .tag{position:absolute;right:-8%;top:-12%;min-width:44%;height:44%;border-radius:50%;background:var(--wood2);color:#fff;
+  font-size:min(1.6vh,1.2vw);display:flex;align-items:center;justify-content:center;border:2px solid #fff}
+@keyframes xin{from{transform:translate(-50%,-50%) scale(2.4) rotate(40deg);opacity:0}}
+.pawn{position:absolute;width:8.5%;height:9.5%;transform:translate(-50%,-90%);z-index:5;pointer-events:none;
+  transition:left .18s linear, top .18s linear;filter:drop-shadow(0 3px 2px rgba(0,0,0,.4))}
+.pawn.cur{z-index:6;filter:drop-shadow(0 0 6px #fff) drop-shadow(0 3px 2px rgba(0,0,0,.4))}
+.pawn.jump{animation:jump .5s}
+@keyframes jump{50%{transform:translate(-50%,-90%) scale(1.5) translateY(-30%)}}
+#shipEl{position:absolute;width:13%;height:13%;transform:translate(-50%,-70%);z-index:5;transition:left .9s ease-in-out,top .9s ease-in-out;
+  filter:drop-shadow(0 4px 3px rgba(0,0,0,.35))}
+#shipEl .in{width:100%;height:100%;animation:bob 2.6s ease-in-out infinite}
+
+#side{flex:1 1 auto;min-width:300px;max-width:420px;display:flex;flex-direction:column;gap:10px;overflow:auto;padding:48px 2px 8px}
+.card{background:var(--paper);border:4px solid var(--wood);border-radius:18px;box-shadow:0 5px 0 var(--wood2);padding:10px 12px}
+.card h4{margin:0 0 6px;font-size:17px;color:var(--wood2)}
+#turnCard{display:flex;align-items:center;gap:10px}
+#turnAvatar{width:64px;height:70px;flex:0 0 auto}
+#turnName{font-size:24px;line-height:1.1}
+#finalNote{color:var(--red);font-size:15px}
+#drawArea{display:flex;gap:12px;align-items:center}
+#bagBtn{flex:0 0 auto;width:96px;height:100px;border:none;background:none;padding:0;position:relative}
+#bagBtn svg{width:100%;height:100%;filter:drop-shadow(0 4px 0 var(--wood2))}
+#bagBtn:not(:disabled):hover svg{transform:rotate(-4deg)}
+#bagBtn.shake svg{animation:shake .45s}
+@keyframes shake{25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+#bagBtn:disabled{opacity:.55;cursor:default}
+#bagLeft{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);background:var(--wood2);color:#fff;border-radius:10px;font-size:12px;padding:1px 7px;white-space:nowrap}
+#msg{font-size:18px;line-height:1.35;flex:1}
+#shellView{width:84px;height:84px;flex:0 0 auto;position:relative;display:none}
+#shellView.show{display:block;animation:pop .45s}
+@keyframes pop{0%{transform:scale(.2) rotate(-90deg)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.shell{position:relative;width:100%;height:100%}
+.shell .base{position:absolute;inset:0}
+.shell .tint{position:absolute;inset:0;-webkit-mask-image:url(assets/sprites.png);mask-image:url(assets/sprites.png);
+  -webkit-mask-size:600% 600%;mask-size:600% 600%;mix-blend-mode:multiply;opacity:.85}
+.shell .dots{position:absolute;inset:22% 22% 16% 22%;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6%;align-content:center}
+.shell .dots i{width:20%;aspect-ratio:1;border-radius:50%;background:#2b2140;display:block}
+.shell .mini{position:absolute;left:18%;top:20%;width:64%;height:64%}
+#giftRow{display:none;margin-top:8px;flex-wrap:wrap;gap:6px;align-items:center;font-size:15px}
+#giftRow.show{display:flex}
+.giftBtn{display:flex;align-items:center;gap:4px;background:#fff;border:3px solid var(--wood);border-radius:12px;padding:2px 8px 2px 2px;font-size:14px;color:var(--ink)}
+.giftBtn .spr{width:28px;height:30px}
+#shipTrack{display:flex;align-items:center;gap:4px}
+#shipTrack .dot{flex:1;height:14px;border-radius:7px;background:#cfe8f6;border:2px solid var(--sea2)}
+#shipTrack .dot.on{background:var(--sea2)}
+#shipTrack .spr{width:40px;height:40px}
+.hunt{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:2px dashed #e5d3ad}
+.hunt:last-child{border-bottom:0}
+.hunt .chest{width:44px;height:44px;flex:0 0 auto;position:relative}
+.hunt .num{position:absolute;right:-4px;top:-4px;width:20px;height:20px;border-radius:50%;background:var(--wood2);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;border:2px solid #fff}
+.hunt .clues{display:flex;gap:4px;flex:1}
+.hunt .clue{width:36px;height:36px;border-radius:8px;border:2px solid #d9c49a;background:#fff;position:relative}
+.hunt .clue.hidden{background:repeating-linear-gradient(45deg,#c99a5b 0 6px,#b78446 6px 12px);border-color:var(--wood)}
+.hunt .clue.cur{border-color:var(--red);box-shadow:0 0 0 2px var(--red)}
+.hunt .clue.done{opacity:.45}
+.hunt .clue.done::after{content:'✔';position:absolute;right:-2px;bottom:-6px;color:var(--green);font-size:18px}
+.hunt.found{background:linear-gradient(90deg,#fff3c4,transparent);border-radius:10px}
+.hunt .tr{width:44px;height:44px}
+.crewRow{display:flex;align-items:center;gap:6px;padding:3px 0}
+.crewRow .spr{width:32px;height:36px;flex:0 0 auto}
+.crewRow .nm{min-width:84px;font-size:15px}
+.crewRow .got{display:flex;gap:2px}
+.crewRow .got .spr{width:28px;height:28px}
+.crewRow.cur .nm{color:var(--red)}
+#sideBtns{display:flex;gap:8px;justify-content:center}
+
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(10,30,50,.55);display:none;align-items:center;justify-content:center;z-index:80;padding:16px}
+#modal.on{display:flex}
+#modalBox{background:var(--paper);border:6px solid var(--wood);border-radius:26px;box-shadow:0 10px 0 var(--wood2);padding:20px 26px;text-align:center;max-width:420px;width:100%;animation:pop .4s}
+#modalBox .big{width:180px;height:180px;margin:0 auto}
+#modalTitle{font-size:32px;color:var(--wood2);margin:4px 0}
+#modalText{font-size:20px;margin-bottom:14px;line-height:1.4}
+.glow{background:radial-gradient(circle,rgba(255,220,90,.9),rgba(255,220,90,0) 65%)}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:90}
+
+/* ONLINE */
+.txtIn{font-family:inherit;font-size:20px;border:3px solid var(--wood);border-radius:12px;padding:8px 12px;background:#fffdf6;color:var(--ink);text-align:center;width:min(220px,60vw)}
+.txtIn.code{width:130px;font-size:28px;letter-spacing:6px;text-transform:uppercase;padding-left:18px}
+.onlineBtns{display:flex;flex-direction:column;align-items:center;gap:10px;margin:12px 0}
+.onlineBtns .or{color:#8a6a45;font-size:16px}
+.joinBox{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+.netMsg{min-height:22px;text-align:center;font-size:16px;color:#8a6a45}
+.netMsg.err{color:var(--red)}
+.codeBox{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:4px 0 6px;font-size:18px}
+.codeBox b{font-size:44px;letter-spacing:8px;color:var(--wood2);background:#fff;border:4px dashed var(--wood);border-radius:14px;padding:0 14px 0 22px}
+#lobbyPick .pick .who{font-size:13px;min-height:22px;border:2px solid #d9c49a;border-radius:8px;padding:2px 4px;background:#fffdf6;color:var(--ink);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#lobbyPick .pick.free .who{color:#b9a47c}
+#lobbyPick .pick.taken{background:#f1ece0;border-color:#cfc3a6;cursor:default}
+#lobbyPick .pick.taken .spr{filter:grayscale(.15)}
+#lobbyPick .pick.mine{border-color:var(--green);background:#eaffef;transform:translateY(-4px)}
+#lobbyPick .pick.mine::after{content:'\2714'}
+#lobbyPick .pick.taken::after{content:''}
+.youTag{display:inline-block;background:var(--red);color:#fff;border-radius:999px;font-size:12px;padding:1px 9px;margin-left:6px;vertical-align:middle}
+#turnCard.mine{border-color:var(--red);animation:mineGlow 1.2s ease-in-out infinite}
+@keyframes mineGlow{50%{box-shadow:0 5px 0 var(--wood2),0 0 0 4px rgba(229,72,59,.35)}}
+.crewRow.away{opacity:.5}
+@media (max-width:560px){#lobbyPick{grid-template-columns:repeat(3,1fr)}.codeBox b{font-size:36px}}
+
+/* ---------- mobile / small screens ---------- */
+@media (max-width:820px), (max-aspect-ratio:1/1){
+  body{overflow-y:auto;overflow-x:hidden}
+  #topbar{top:calc(6px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));gap:6px}
+  .chip{font-size:13px;padding:4px 10px;border-width:2px;box-shadow:0 2px 0 var(--wood2)}
+  .screen{padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+  .paper{padding:14px 14px;border-width:4px;border-radius:18px;box-shadow:0 6px 0 var(--wood2),0 14px 28px rgba(0,0,0,.3)}
+  .paper h2{font-size:26px}
+  .btn{font-size:21px;padding:10px 22px;border-width:3px;box-shadow:0 5px 0 var(--wood2)}
+  .btn.small{font-size:16px;padding:7px 14px}
+  .row{margin:12px 0}
+  .pick input{font-size:12px;padding:3px 2px}
+  .rules{font-size:18px}
+
+  #game.on{display:flex;flex-direction:column;position:absolute;inset:0 0 auto 0;min-height:100%;
+    align-items:center;justify-content:flex-start;gap:10px;
+    padding:calc(40px + env(safe-area-inset-top)) 8px calc(16px + env(safe-area-inset-bottom))}
+  #boardWrap{width:min(100%,640px);align-self:center;border-width:4px;border-radius:14px;box-shadow:0 5px 0 var(--wood2),0 10px 22px rgba(0,0,0,.3)}
+  .node{width:5.8%;height:5.8%;border-width:2px}
+  .node.start{width:6.8%;height:6.8%}
+  .node.land::after{font-size:11px}
+  .pawn{width:9.5%;height:10.5%}
+  #shipEl{width:15%;height:15%}
+  .xmark .tag{font-size:10px}
+
+  #side{width:min(100%,640px);max-width:none;min-width:0;flex:0 0 auto;overflow:visible;padding:0;
+    display:grid;grid-template-columns:1fr;gap:8px}
+  #side .card{padding:8px 10px;border-width:3px;border-radius:14px;box-shadow:0 3px 0 var(--wood2)}
+  #side .card h4{font-size:14px;margin-bottom:4px}
+  #turnCard{gap:8px;padding:6px 10px}
+  #turnAvatar{width:38px;height:42px}
+  #turnName{font-size:19px}
+  #finalNote{font-size:13px}
+  #bagBtn{width:72px;height:76px}
+  #bagLeft{font-size:11px}
+  #shellView{width:64px;height:64px}
+  #msg{font-size:15px;line-height:1.3}
+  #drawArea{gap:8px}
+  #giftRow{font-size:13px;margin-top:6px}
+  .giftBtn{font-size:13px;padding:2px 8px 2px 2px}
+  #shipTrack .dot{height:11px}
+  #shipTrack .spr{width:34px;height:34px}
+  .hunt{padding:3px 0;gap:6px}
+  .hunt .chest{width:34px;height:34px}
+  .hunt .num{width:17px;height:17px;font-size:11px}
+  .hunt .clue{width:32px;height:32px}
+  .hunt .tr{width:34px;height:34px}
+  #crewList{display:flex;flex-wrap:wrap;gap:6px}
+  .crewRow{background:#fff;border:2px solid #e5d3ad;border-radius:999px;padding:2px 10px 2px 4px;gap:4px}
+  .crewRow.cur{border-color:var(--red);background:#fff4f1}
+  .crewRow .spr{width:26px;height:28px}
+  .crewRow .nm{min-width:0;font-size:14px}
+  .crewRow .got .spr{width:22px;height:22px}
+  #sideBtns{padding-top:2px}
+  #modalBox{padding:16px 18px;border-width:5px;border-radius:22px}
+  #modalBox .big{width:140px;height:140px}
+  #modalTitle{font-size:26px}
+  #modalText{font-size:17px}
+}
+/* phone held sideways: board left, panel right, everything compact */
+@media (orientation:landscape) and (max-height:520px){
+  body{overflow:auto}
+  #topbar{top:4px;right:6px}
+  .chip{font-size:12px;padding:3px 8px;border-width:2px}
+  .screen{padding:8px}
+  .paper{padding:10px 14px;max-height:calc(100dvh - 16px)}
+  .paper h2{font-size:22px}
+  .hint{margin-bottom:6px;font-size:13px}
+  .crewPick{grid-template-columns:repeat(5,1fr);gap:6px}
+  .pick .spr{aspect-ratio:auto;height:19dvh}
+  .pick{padding:4px 3px 5px}
+  .hint{display:none}
+  .diffDesc{font-size:12px;min-height:0}
+  .seg button{padding:5px 12px;font-size:15px}
+  .row{margin:6px 0}
+  .btn{font-size:18px;padding:6px 18px;border-width:3px;box-shadow:0 4px 0 var(--wood2)}
+  .btn.small{font-size:14px;padding:5px 12px}
+  .logo{font-size:52px;margin:2px 0 14px;-webkit-text-stroke:4px var(--wood2);text-shadow:0 5px 0 var(--wood2)}
+  .titleArt{height:84px;margin:0 auto 2px}
+  .sub{font-size:14px;margin-bottom:8px}
+  #setup,#rulesScr{padding-top:40px}
+  #setup .paper,#rulesScr .paper{max-height:calc(100dvh - 48px)}
+  .menu{flex-direction:row}
+  #game{padding:6px;gap:8px}
+  #game.on{display:flex;flex-direction:row;position:fixed;inset:0;align-items:center;padding:6px calc(6px + env(safe-area-inset-right)) 6px calc(6px + env(safe-area-inset-left))}
+  #boardWrap{width:calc(100dvh - 12px);height:calc(100dvh - 12px);aspect-ratio:auto;flex:0 0 auto;min-width:0;border-width:4px;border-radius:14px}
+  .node{width:5.6%;height:5.6%}
+  #side{flex:1 1 0;min-width:0;max-width:none;height:calc(100dvh - 12px);overflow-y:auto;padding:34px 2px 6px 0;gap:6px;display:flex}
+  #side .card{padding:6px 8px;border-width:3px;border-radius:12px;box-shadow:0 3px 0 var(--wood2)}
+  #side .card h4{font-size:13px;margin-bottom:2px}
+  #turnCard{padding:4px 8px;gap:6px}
+  #turnAvatar{width:32px;height:35px}
+  #turnName{font-size:16px}
+  #bagBtn{width:58px;height:62px}
+  #shellView{width:52px;height:52px}
+  #msg{font-size:13px}
+  #shipTrack .spr{width:28px;height:28px}
+  #shipTrack .dot{height:9px}
+  .hunt .chest,.hunt .tr{width:28px;height:28px}
+  .hunt .clue{width:26px;height:26px}
+  .crewRow .spr{width:22px;height:24px}
+  .crewRow .nm{min-width:0;font-size:12px}
+  #crewList{display:flex;flex-wrap:wrap;gap:4px}
+  .crewRow{background:#fff;border:2px solid #e5d3ad;border-radius:999px;padding:1px 8px 1px 3px}
+  #giftRow{font-size:12px;margin-top:4px}
+  #sideBtns .btn{font-size:13px;padding:4px 10px}
+  #modalBox .big{width:100px;height:100px}
+  #modalBox{padding:10px 16px}
+  #modalTitle{font-size:22px;margin:0}
+  #modalText{font-size:15px;margin-bottom:8px}
+}
+
+/* ---- set-sail intro ---- */
+#sail{position:fixed;inset:0;z-index:90;overflow:hidden;background:linear-gradient(#ffb36b 0%,#ffd9a0 38%,#bfe6f2 56%);cursor:pointer;animation:sailIn .35s ease-out}
+#sail.out{animation:sailOut .5s ease-in forwards}
+@keyframes sailIn{from{opacity:0}to{opacity:1}} @keyframes sailOut{to{opacity:0}}
+#sail .sun{position:absolute;left:50%;top:30%;width:34vmin;height:34vmin;margin-left:-17vmin;border-radius:50%;background:radial-gradient(#fff6c8,#ffd66b 55%,rgba(255,214,107,0) 70%);animation:sunUp 3.6s ease-out forwards}
+@keyframes sunUp{from{transform:translateY(14vmin)}to{transform:translateY(0)}}
+#sail .cloud{position:absolute;height:5vmin;width:20vmin;border-radius:5vmin;background:#fff;opacity:.8;box-shadow:6vmin -2vmin 0 -1vmin #fff,-5vmin 1vmin 0 -1vmin #fff;animation:cloudMove linear infinite}
+@keyframes cloudMove{from{transform:translateX(0)}to{transform:translateX(-140vw)}}
+#sail .sea{position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(#3fb4cf,#1b6f99 70%,#124f78)}
+#sail .wv{position:absolute;left:-10%;width:220%;height:14vmin;bottom:0;background:radial-gradient(circle at 50% 100%,transparent 52%,var(--c) 54%) 0 0/9vmin 7vmin repeat-x;animation:wvMove linear infinite}
+@keyframes wvMove{from{transform:translateX(0)}to{transform:translateX(9vmin)}}
+#sail .dock{position:absolute;right:-2vmin;bottom:38%;width:26vmin;height:5vmin;background:repeating-linear-gradient(90deg,#8a5a2b 0 3vmin,#6e4520 3vmin 3.4vmin);border-radius:1vmin;box-shadow:0 7vmin 0 -2vmin #5a3818;animation:dockOut 3.6s ease-in forwards}
+@keyframes dockOut{0%,25%{transform:translateX(0)}100%{transform:translateX(30vmin)}}
+#sail .shipWrap{position:absolute;left:50%;bottom:30%;width:42vmin;margin-left:-21vmin;animation:shipGo 3.6s cubic-bezier(.5,0,.8,.6) forwards}
+@keyframes shipGo{0%{transform:translateX(34vmin)}22%{transform:translateX(30vmin)}100%{transform:translateX(-150vw)}}
+#sail .shipBob{position:relative;width:100%;aspect-ratio:1;animation:bob 1.1s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-2.5deg)}50%{transform:translateY(-1.6vmin) rotate(2.5deg)}}
+#sail .shipWrap .spr{position:absolute;inset:0;filter:drop-shadow(0 1.5vmin 1.2vmin rgba(0,0,0,.25))}
+#sail .crewOn{position:absolute;left:14%;width:60%;top:43%;display:flex;justify-content:center;gap:0;z-index:2}
+#sail .crewOn .spr{position:relative;inset:auto;filter:none;width:7.2vmin;aspect-ratio:1/1.1;margin:0 -1vmin;animation:hop .55s ease-in-out infinite}
+@keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.8vmin)}}
+#sail .wake{position:absolute;left:68%;bottom:-1vmin;width:30vmin;height:3vmin;border-radius:50%;background:radial-gradient(rgba(255,255,255,.9),rgba(255,255,255,0) 70%);opacity:0;animation:wake 3.6s linear forwards}
+@keyframes wake{0%,22%{opacity:0;transform:scaleX(.3)}40%{opacity:1}100%{opacity:.8;transform:scaleX(2.2)}}
+#sail .ttl{position:absolute;left:0;right:0;top:10%;text-align:center;font-weight:900;font-size:min(14vmin,15vw);color:#fff;letter-spacing:.04em;text-shadow:0 .8vmin 0 #b4491b,0 0 3vmin rgba(255,150,40,.8);animation:ttl 3.6s ease-out forwards;opacity:0}
+@keyframes ttl{0%,10%{opacity:0;transform:scale(.4) rotate(-6deg)}22%{opacity:1;transform:scale(1.15) rotate(2deg)}30%,85%{opacity:1;transform:scale(1) rotate(0)}100%{opacity:0;transform:scale(1.1)}}
+#sail .skip{position:absolute;right:14px;bottom:12px;font-size:12px;color:#fff;opacity:.8;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+</style>
+</head>
+<body>
+<div class="waves"></div>
+
+<div id="topbar">
+  <button class="chip" id="langKo">한국어</button>
+  <button class="chip" id="langEn">English</button>
+  <button class="chip" id="soundBtn">🔊</button>
+</div>
+
+<!-- TITLE -->
+<section class="screen on" id="title">
+  <div class="titleArt" id="titleArt"></div>
+  <div class="logo" data-t="title">해적탐험단!</div>
+  <div class="sub" data-t="subtitle"></div>
+  <div class="menu">
+    <button class="btn" id="toSetup" data-t="start"></button>
+    <button class="btn" id="toOnline" data-t="online" style="background:linear-gradient(#7fe0ff,#2fa6e0)"></button>
+    <button class="btn sec small" id="toRules" data-t="howto"></button>
+  </div>
+</section>
+
+<!-- SETUP -->
+<section class="screen" id="setup">
+  <div class="paper">
+    <h2 data-t="setupTitle"></h2>
+    <div class="hint" data-t="setupHint"></div>
+    <div class="crewPick" id="crewPick"></div>
+    <div class="row">
+      <b data-t="diff"></b>
+      <div class="seg" id="diffSeg">
+        <button data-d="easy" data-t="easy"></button>
+        <button data-d="normal" data-t="normal" class="on"></button>
+        <button data-d="hard" data-t="hard"></button>
+      </div>
+    </div>
+    <div class="diffDesc" id="diffDesc"></div>
+    <div class="row">
+      <button class="btn sec small" id="setupBack" data-t="back"></button>
+      <button class="btn" id="goBtn" data-t="go"></button>
+    </div>
+  </div>
+</section>
+
+<!-- ONLINE -->
+<section class="screen" id="onlineScr">
+  <div class="paper">
+    <h2 data-t="onlineTitle"></h2>
+    <div class="hint" data-t="onlineHint"></div>
+    <div class="row"><b data-t="nick"></b><input id="nickInput" class="txtIn" maxlength="10" data-ph="nickPh"></div>
+    <div class="onlineBtns">
+      <button class="btn" id="createRoom" data-t="createRoom"></button>
+      <div class="or" data-t="or"></div>
+      <div class="joinBox"><input id="codeInput" class="txtIn code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD"><button class="btn" id="joinRoom" data-t="join"></button></div>
+    </div>
+    <div id="onlineMsg" class="netMsg"></div>
+    <div class="row"><button class="btn sec small" id="onlineBack" data-t="back"></button></div>
+  </div>
+</section>
+
+<!-- LOBBY -->
+<section class="screen" id="lobby">
+  <div class="paper">
+    <h2 data-t="lobbyTitle"></h2>
+    <div class="codeBox"><span data-t="roomCode"></span><b id="roomCode">----</b><button class="chip" id="copyLink" data-t="copyLink"></button></div>
+    <div class="hint" id="lobbyHint"></div>
+    <div class="crewPick" id="lobbyPick"></div>
+    <div class="row">
+      <b data-t="diff"></b>
+      <div class="seg" id="lobbyDiff">
+        <button data-d="easy" data-t="easy"></button>
+        <button data-d="normal" data-t="normal"></button>
+        <button data-d="hard" data-t="hard"></button>
+      </div>
+    </div>
+    <div class="diffDesc" id="lobbyDiffDesc"></div>
+    <div class="row">
+      <button class="btn sec small" id="lobbyLeave" data-t="leave"></button>
+      <button class="btn" id="lobbyStart" data-t="startOnline"></button>
+    </div>
+  </div>
+</section>
+
+<!-- RULES -->
+<section class="screen" id="rulesScr">
+  <div class="paper">
+    <h2 data-t="howto"></h2>
+    <div class="rules" id="rulesBody"></div>
+    <div class="row"><button class="btn small" id="rulesBack" data-t="back"></button></div>
+  </div>
+</section>
+
+<!-- GAME -->
+<section class="screen" id="game">
+  <div id="boardWrap">
+    <canvas id="boardCanvas" width="1000" height="1000"></canvas>
+    <div id="layer"></div>
+  </div>
+  <div id="side">
+    <div class="card" id="turnCard">
+      <div class="spr" id="turnAvatar"></div>
+      <div><div id="turnName"></div><div id="finalNote"></div></div>
+    </div>
+    <div class="card" id="drawCard">
+      <div id="drawArea">
+        <button id="bagBtn" aria-label="bag">
+          <svg viewBox="0 0 100 104">
+            <path d="M30 26 Q50 34 70 26 L74 34 Q92 60 86 84 Q80 100 50 100 Q20 100 14 84 Q8 60 26 34 Z" fill="#c8995a" stroke="#5a3416" stroke-width="4"/>
+            <path d="M24 30 Q50 40 76 30" fill="none" stroke="#e5483b" stroke-width="6" stroke-linecap="round"/>
+            <path d="M34 26 Q38 6 50 14 Q62 6 66 26" fill="#c8995a" stroke="#5a3416" stroke-width="4"/>
+            <path d="M30 60 Q50 70 70 60" fill="none" stroke="#a87a40" stroke-width="3"/>
+            <circle cx="50" cy="74" r="10" fill="#fff8e7" stroke="#5a3416" stroke-width="3"/>
+            <path d="M44 74 h12 M50 68 v12" stroke="#5a3416" stroke-width="3"/>
+          </svg>
+          <span id="bagLeft"></span>
+        </button>
+        <div id="shellView"></div>
+        <div id="msg"></div>
+      </div>
+      <div id="giftRow"></div>
+    </div>
+    <div class="card" id="shipCard">
+      <h4 data-t="shipLbl"></h4>
+      <div id="shipTrack"></div>
+    </div>
+    <div class="card" id="huntCard">
+      <h4 data-t="hunts"></h4>
+      <div id="huntList"></div>
+    </div>
+    <div class="card" id="crewCard">
+      <h4 data-t="crew"></h4>
+      <div id="crewList"></div>
+    </div>
+    <div id="sideBtns">
+      <button class="btn sec small" id="gameRules" data-t="howto"></button>
+      <button class="btn sec small" id="gameHome" data-t="home"></button>
+    </div>
+  </div>
+</section>
+
+<div id="modal"><div id="modalBox">
+  <div class="big" id="modalArt"></div>
+  <div id="modalTitle"></div>
+  <div id="modalText"></div>
+  <div class="row" id="modalBtns" style="margin:0"></div>
+</div></div>
+<canvas id="confetti"></canvas>
+
+<script src="assets/peerjs.min.js"></script>
+<script>
+/* =========================================================
+   해적탐험단! — cooperative pirate treasure board game
+   Sprite atlas: assets/sprites.png (6 x 6 grid, cut by index)
+   ========================================================= */
+const ATLAS_COLS = 6;
+const S = { pirates:[0,1,2,3,4], ship:5, landStart:6, treasureStart:24, chest:33, shell:34, x:35 };
+const LAND_N = 18, TREASURE_N = 9;
+function sprPos(i){ const c=i%ATLAS_COLS, r=Math.floor(i/ATLAS_COLS); return `${c*20}% ${r*20}%`; }
+function sprDiv(i, cls=''){ return `<div class="spr ${cls}" style="background-position:${sprPos(i)}"></div>`; }
+function setSpr(el,i){ el.style.backgroundPosition = sprPos(i); }
+
+/* ---------------- i18n ---------------- */
+const I18N = {
+  ko:{
+    title:'해적탐험단!', subtitle:'힘을 모아, 배가 돌아오기 전에 보물을 모두 찾아라!',
+    start:'모험 시작', howto:'게임 방법', back:'뒤로', home:'처음으로',
+    setupTitle:'탐험대원을 골라요', setupHint:'카드를 눌러 2~5명을 선택하세요. 이름도 바꿀 수 있어요!',
+    diff:'난이도', easy:'쉬움', normal:'보통', hard:'어려움',
+    diffEasy:'보물마다 단서 2개 · 배 조개 6개', diffNormal:'보물마다 단서 3개 · 배 조개 6개', diffHard:'보물마다 단서 3개 · 배 조개 8개 (배가 빨리 와요!)',
+    go:'출항!', needTwo:'2명 이상 골라주세요!',
+    turn:'{name}의 차례', drawPrompt:'주머니를 눌러 조개를 뽑으세요!', bagLeft:'{n}개 남음',
+    white:'최대 <b>{n}칸</b> 움직일 수 있어요. 반짝이는 칸을 눌러요!',
+    magic:'마법 조개! <b>{color}</b> 칸 아무 곳으로 순간이동! 반짝이는 칸을 눌러요.',
+    shipShell:'배 조개! 해적선이 한 칸 다가와요…',
+    giftLabel:'🎁 친구에게 조개 선물하기:',
+    giftMove:'<b>{to}</b>이(가) {from}에게 받은 조개로 움직여요!',
+    clueFound:'단서 발견!', clueNext:'다음 단서는 <b>{place}</b>에 있어요! X 표시를 찾아가요.',
+    treasureFound:'보물 발견!', treasureGot:'<b>{name}</b>이(가) <b>{treasure}</b>을(를) 찾았어요!',
+    shipArrive:'해적선 도착!', shipArriveText:'배가 항구에 도착했어요! 모두 <b>한 번씩만</b> 더 할 수 있어요!',
+    finalTurns:'⏳ 마지막 차례 {n}번 남음', bagEmpty:'주머니가 비었어요!',
+    winTitle:'대성공!', winText:'모든 보물을 찾아 배에 실었어요! 우리는 최고의 해적탐험단!',
+    loseTitle:'아쉬워요!', loseText:'배가 보물을 다 싣지 못하고 떠나버렸어요… 다시 도전해요!',
+    again:'다시 하기', ok:'좋아!', shipLbl:'해적선이 오고 있어요', hunts:'보물 찾기', crew:'탐험대',
+    red:'빨강', green:'초록', yellow:'노랑', blue:'파랑', huntN:'보물 {n}',
+    online:'🌐 온라인으로 함께하기', onlineTitle:'온라인으로 함께해요', onlineHint:'친구들과 각자 폰으로 한 팀이 되어 보물을 찾아요!',
+    nick:'내 이름', nickPh:'이름 (비워도 돼요)', createRoom:'방 만들기', or:'또는 방 코드로 입장', join:'입장',
+    lobbyTitle:'탐험대 모으는 중', roomCode:'방 코드', copyLink:'링크 복사', copied:'복사됨!',
+    lobbyHintHost:'친구가 방 코드를 입력하면 들어와요. 카드를 눌러 내 해적을 고르세요!', lobbyHintGuest:'내 해적을 고르고 방장이 시작하길 기다려요.',
+    startOnline:'출항!', needTwoOnline:'2명 이상 모여야 해요!', leave:'나가기', empty:'비어 있음', me:'나', hostTag:'방장',
+    connecting:'연결하는 중…', roomNotFound:'그 방을 찾을 수 없어요. 코드를 다시 확인해 주세요.', roomFull:'방이 가득 찼어요.', roomStarted:'이미 게임이 시작된 방이에요.',
+    hostLeft:'방장이 나가서 방이 닫혔어요.', netFail:'연결에 실패했어요. 잠시 뒤 다시 해 보세요.', netHint:'계속 안 되면 같은 와이파이로 연결하거나 방장이 새 방을 만들어 보세요.',
+    noModule:'온라인 모듈(assets/peerjs.min.js)을 찾을 수 없어요.', codeShort:'방 코드 4글자를 입력해 주세요.',
+    waiting:'<b>{name}</b>의 차례예요. 기다리는 중…', waitingMove:'<b>{name}</b>이(가) 움직이는 중이에요…', yourTurn:'내 차례!',
+    playerAway:'{name}이(가) 연결이 끊겨서 도우미가 대신 해 줘요.', waitHostEnd:'방장이 다시 시작하길 기다려요.',
+    pirates:['루비 선장','통통 토비','키다리 핀','버드 할아버지','망원경 미아'],
+    lands:['불가사리','칼','망원경','해골 열쇠','해적 깃발','보라 산','삽','장화','조타륜','동굴','난파선','유리병 편지','닻','나침반','조수 웅덩이','폭포','야자수','나무통'],
+    treasures:['금화 더미','보석 술잔','왕관','진주 목걸이','에메랄드 목걸이','금괴','황금 촛대','선장 모자','보석 허리띠'],
+    rules:`
+<h3>🏴‍☠️ 목표</h3>
+모두가 한 팀이 되는 <b>협력 게임</b>이에요! 해적선이 항구에 도착하기 전에 단서를 따라가 <b>보물을 모두</b> 찾으면 다 함께 승리해요.
+<h3>🧭 준비</h3>
+<ul><li>탐험대원 수만큼 보물 상자가 놓여요. 보물마다 단서 카드가 숨어 있어요.</li>
+<li>각 보물의 첫 단서 장소에 <b>빨간 X</b>가 표시돼요.</li>
+<li>모두 START(노란 큰 칸)에서 출발해요.</li></ul>
+<h3>🐚 내 차례: 주머니에서 조개 뽑기</h3>
+<ul>
+<li><span class="ic spr" style="background-position:{shellPos}"></span> <b>하얀 조개</b>: 점 개수만큼 <b>까지</b> 아무 방향으로나 움직여요.</li>
+<li>🔴🟢🟡🔵 <b>마법 조개</b>: 같은 색 칸 아무 곳으로 순간이동!</li>
+<li><span class="ic spr" style="background-position:{shipPos}"></span> <b>배 조개</b>: 움직이지 못하고, 해적선이 항구로 한 칸 다가와요.</li>
+<li>🎁 <b>선물하기</b>: 하얀/마법 조개는 내가 쓰는 대신 친구에게 줄 수 있어요. 친구가 그 조개로 움직여요.</li>
+<li>뽑은 조개는 주머니에 다시 넣지 않아요.</li></ul>
+<h3>❌ 단서와 보물 모으기</h3>
+<ul><li>X 칸에 멈추면 그 단서를 얻고, 다음 카드를 뒤집어요.</li>
+<li>다음 카드가 단서면 새 장소에 X가 생겨요. 보물이면 보물 획득!</li></ul>
+<h3>⛵ 게임 끝</h3>
+<ul><li>해적선이 항구에 도착하면 모두 한 번씩만 더 할 수 있어요.</li>
+<li>그 전에 보물을 모두 찾으면 승리! 못 찾으면 다음에 다시 도전!</li></ul>
+<h3>💡 꿀팁</h3>
+해적 말투로 말해 보세요. “요호호~ 보물이다!”`
+  },
+  en:{
+    title:'Pirate Explorers!', subtitle:'Work together and find every treasure before the ship sails in!',
+    start:'Start Adventure', howto:'How to Play', back:'Back', home:'Home',
+    setupTitle:'Choose your crew', setupHint:'Tap cards to pick 2–5 pirates. You can rename them, too!',
+    diff:'Difficulty', easy:'Easy', normal:'Normal', hard:'Hard',
+    diffEasy:'2 clues per treasure · 6 ship shells', diffNormal:'3 clues per treasure · 6 ship shells', diffHard:'3 clues per treasure · 8 ship shells (the ship comes fast!)',
+    go:'Set Sail!', needTwo:'Pick at least 2 pirates!',
+    turn:"{name}'s turn", drawPrompt:'Tap the bag to draw a shell!', bagLeft:'{n} left',
+    white:'Move <b>up to {n}</b> spaces. Tap a sparkling space!',
+    magic:'Magic shell! Jump to any <b>{color}</b> space. Tap a sparkling space!',
+    shipShell:'Ship shell! The pirate ship sails one step closer…',
+    giftLabel:'🎁 Gift your shell to:',
+    giftMove:'<b>{to}</b> moves with the shell gifted by {from}!',
+    clueFound:'Clue found!', clueNext:'The next clue is at the <b>{place}</b>! Look for the X.',
+    treasureFound:'Treasure found!', treasureGot:'<b>{name}</b> found the <b>{treasure}</b>!',
+    shipArrive:'The ship is here!', shipArriveText:'The ship reached the harbor! Everyone gets <b>one last turn</b>!',
+    finalTurns:'⏳ {n} final turn(s) left', bagEmpty:'The bag is empty!',
+    winTitle:'Hooray!', winText:'You found every treasure and loaded the ship! Best pirate crew ever!',
+    loseTitle:'Oh no!', loseText:'The ship sailed away before all the treasure was found… Try again!',
+    again:'Play Again', ok:'Aye!', shipLbl:'The ship is coming', hunts:'Treasure Hunts', crew:'Crew',
+    red:'red', green:'green', yellow:'yellow', blue:'blue', huntN:'Treasure {n}',
+    online:'🌐 Play Online Together', onlineTitle:'Play together online', onlineHint:'Team up with friends on your own phones and find the treasure!',
+    nick:'My name', nickPh:'Name (optional)', createRoom:'Create Room', or:'or join with a room code', join:'Join',
+    lobbyTitle:'Gathering the crew', roomCode:'Room code', copyLink:'Copy link', copied:'Copied!',
+    lobbyHintHost:'Friends join by entering the room code. Tap a card to pick your pirate!', lobbyHintGuest:'Pick your pirate and wait for the host to start.',
+    startOnline:'Set Sail!', needTwoOnline:'You need at least 2 players!', leave:'Leave', empty:'Empty', me:'me', hostTag:'host',
+    connecting:'Connecting…', roomNotFound:'Room not found. Please check the code.', roomFull:'The room is full.', roomStarted:'That game has already started.',
+    hostLeft:'The host left, so the room was closed.', netFail:'Connection failed. Please try again in a moment.', netHint:'If it keeps failing, try the same Wi-Fi, or have the host create a new room.',
+    noModule:'Online module (assets/peerjs.min.js) not found.', codeShort:'Please enter the 4-letter room code.',
+    waiting:"It's <b>{name}</b>'s turn. Waiting…", waitingMove:'<b>{name}</b> is moving…', yourTurn:'Your turn!',
+    playerAway:'{name} disconnected, so a helper plays for them.', waitHostEnd:'Waiting for the host to play again.',
+    pirates:['Captain Ruby','Tubby Toby','Lanky Finn','Grandpa Bud','Spyglass Mia'],
+    lands:['Starfish','Sword','Telescope','Skull Key','Pirate Flag','Purple Mountains','Shovel','Boot','Ship Wheel','Cave','Shipwreck','Message Bottle','Anchor','Compass','Tide Pools','Waterfall','Palm Trees','Barrel'],
+    treasures:['Gold Coins','Jeweled Goblet','Crown','Pearl Necklace','Emerald Pendant','Gold Bars','Golden Candelabra','Captain Hat','Jeweled Belt'],
+    rules:`
+<h3>🏴‍☠️ Goal</h3>
+This is a <b>cooperative game</b> — everyone is on one team! Follow the clues and find <b>all the treasures</b> before the pirate ship reaches the harbor.
+<h3>🧭 Setup</h3>
+<ul><li>One treasure chest per player. Each treasure hides a trail of clue cards.</li>
+<li>A <b>red X</b> marks the first clue spot for every treasure.</li>
+<li>Everyone starts on START (the big yellow space).</li></ul>
+<h3>🐚 Your turn: draw a shell from the bag</h3>
+<ul>
+<li><span class="ic spr" style="background-position:{shellPos}"></span> <b>White shell</b>: move <b>up to</b> that many dots, in any direction.</li>
+<li>🔴🟢🟡🔵 <b>Magic shell</b>: jump to any space of that color!</li>
+<li><span class="ic spr" style="background-position:{shipPos}"></span> <b>Ship shell</b>: you don't move — the ship sails one step closer.</li>
+<li>🎁 <b>Gifting</b>: instead of using a white/magic shell, give it to a friend. They move with it.</li>
+<li>Shells are never put back in the bag.</li></ul>
+<h3>❌ Clues & treasures</h3>
+<ul><li>Stop on an X to collect that clue, then flip the next card.</li>
+<li>Another clue? A new X appears. A treasure? You found it!</li></ul>
+<h3>⛵ Game end</h3>
+<ul><li>When the ship reaches the harbor, everyone gets one last turn.</li>
+<li>Find every treasure before then and you all win!</li></ul>
+<h3>💡 Tip</h3>
+Talk like a pirate: “Yo-ho-ho, treasure ahoy!”`
+  }
+};
+let LANG = 'ko';
+try{ LANG = localStorage.getItem('pirate_lang') || 'ko'; }catch(e){}
+function t(k, v={}){ let s = I18N[LANG][k]; if(s===undefined) s = k;
+  if(typeof s==='string') s = s.replace(/\{(\w+)\}/g,(m,p)=> v[p]!==undefined ? v[p] : m); return s; }
+function applyLang(){
+  document.documentElement.lang = LANG;
+  document.title = t('title');
+  document.querySelectorAll('[data-t]').forEach(el=> el.innerHTML = t(el.dataset.t));
+  document.querySelectorAll('[data-ph]').forEach(el=> el.placeholder = t(el.dataset.ph));
+  document.getElementById('langKo').classList.toggle('active', LANG==='ko');
+  document.getElementById('langEn').classList.toggle('active', LANG==='en');
+  document.getElementById('rulesBody').innerHTML = t('rules').replace('{shellPos}',sprPos(S.shell)).replace('{shipPos}',sprPos(S.ship));
+  renderSetup(); updateDiffDesc(); try{ renderLobby(); }catch(e){}
+  if(G) renderAll();
+}
+function setLang(l){ LANG=l; try{localStorage.setItem('pirate_lang',l)}catch(e){} applyLang(); }
+
+/* ---------------- audio ---------------- */
+const MUSIC = {
+  home: new Audio('audio/nastelbom-pirates-437941.mp3'),
+  play: new Audio('audio/ebunny-pirate-jolly-roger-loop-369969.mp3')
+};
+MUSIC.home.loop = true; MUSIC.play.loop = true; MUSIC.home.volume = .55; MUSIC.play.volume = .4;
+let soundOn = true, wantTrack = 'home', unlocked = false;
+try{ soundOn = localStorage.getItem('pirate_sound') !== 'off'; }catch(e){}
+function playMusic(which){
+  wantTrack = which;
+  for(const k in MUSIC){ if(k!==which){ MUSIC[k].pause(); } }
+  if(soundOn && unlocked){ const a = MUSIC[which]; if(a.paused){ if(which==='play') a.currentTime = a.currentTime||0; a.play().catch(()=>{}); } }
+}
+function toggleSound(){
+  soundOn = !soundOn; try{localStorage.setItem('pirate_sound', soundOn?'on':'off')}catch(e){}
+  document.getElementById('soundBtn').textContent = soundOn ? '🔊' : '🔇';
+  if(soundOn){ playMusic(wantTrack); sfx('click'); } else for(const k in MUSIC) MUSIC[k].pause();
+}
+document.addEventListener('pointerdown', ()=>{
+  try{ AC = AC || new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); }catch(e){}
+  if(!unlocked){ unlocked = true; playMusic(wantTrack); } }, {capture:true});
+/* every button / card / sparkling space gives a click sound */
+document.addEventListener('click', e=>{
+  if(e.target.tagName==='INPUT') return;
+  const el = e.target.closest('button, .pick, .node.reach'); if(!el || el.disabled) return;
+  if(el.id==='bagBtn' || el.id==='soundBtn' || el.classList.contains('node') || el.classList.contains('giftBtn')) return; // these have their own sounds
+  sfx(el.classList.contains('pick') ? 'select' : (el.id==='setupBack'||el.id==='rulesBack') ? 'back' : 'click');
+}, true);
+
+let AC = null;
+function sfx(type){
+  if(!soundOn) return;
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended') AC.resume();
+    const now = AC.currentTime;
+    const tone = (f, d, delay=0, wave='triangle', vol=.18)=>{
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = wave; o.frequency.setValueAtTime(f, now+delay);
+      g.gain.setValueAtTime(0.0001, now+delay); g.gain.exponentialRampToValueAtTime(vol, now+delay+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now+delay+d);
+      o.connect(g).connect(AC.destination); o.start(now+delay); o.stop(now+delay+d+0.05);
+    };
+    if(type==='draw'){ tone(300,.08,0,'square',.06); tone(420,.08,.08,'square',.06); tone(620,.15,.16,'triangle',.15); }
+    if(type==='step'){ tone(520+Math.random()*120,.07,0,'sine',.12); }
+    if(type==='magic'){ [660,880,1100,1320].forEach((f,i)=>tone(f,.18,i*.06,'sine',.12)); }
+    if(type==='ship'){ tone(110,.7,0,'sawtooth',.08); tone(147,.7,.05,'sawtooth',.06); }
+    if(type==='clue'){ tone(784,.15,0); tone(1046,.25,.12); }
+    if(type==='treasure'){ [523,659,784,1046,1318].forEach((f,i)=>tone(f,.3,i*.09,'triangle',.16)); }
+    if(type==='win'){ [523,659,784,659,784,1046].forEach((f,i)=>tone(f,.32,i*.14,'square',.08)); }
+    if(type==='lose'){ [392,349,311,262].forEach((f,i)=>tone(f,.4,i*.2,'triangle',.14)); }
+    if(type==='gift'){ tone(880,.12,0,'sine'); tone(1175,.2,.1,'sine'); }
+    if(type==='click'){ tone(740,.07,0,'square',.07); tone(988,.09,.04,'triangle',.12); }
+    if(type==='select'){ tone(880,.06,0,'triangle',.12); tone(1320,.09,.05,'sine',.12); }
+    if(type==='turn'){ tone(988,.12,0,'sine',.14); tone(1319,.22,.1,'sine',.14); }
+    if(type==='horn'){ tone(98,.9,0,'sawtooth',.10); tone(147,.9,.02,'sawtooth',.07); tone(196,.7,.05,'triangle',.06); }
+    if(type==='sail'){ [0,.25,.5,.75,1.0,1.25].forEach((d,i)=>tone(330+i*40,.3,d,'sine',.05)); }
+    if(type==='back'){ tone(620,.07,0,'square',.07); tone(440,.1,.04,'triangle',.12); }
+  }catch(e){}
+}
+
+
+/* ---------------- set-sail intro animation ---------------- */
+function sailIntro(){
+  const old = document.getElementById('sail'); if(old) old.remove();
+  if(!G) return;
+  const d = document.createElement('div'); d.id='sail';
+  const crew = G.players.map(p=>`<div class="spr" style="background-position:${sprPos(S.pirates[p.pi])}"></div>`).join('');
+  const clouds = [[8,22,26],[40,12,34],[70,26,30]].map(([l,tp,du])=>`<div class="cloud" style="left:${l+40}%;top:${tp}%;animation-duration:${du}s"></div>`).join('');
+  d.innerHTML = `<div class="sun"></div>${clouds}<div class="sea"></div><div class="dock"></div>
+    <div class="shipWrap"><div class="shipBob"><div class="spr" style="background-position:${sprPos(S.ship)}"></div><div class="crewOn">${crew}</div></div><div class="wake"></div></div>
+    <div class="sea" style="background:none;pointer-events:none"><div class="wv" style="--c:#6fd0e3;bottom:6%;animation-duration:2.6s"></div><div class="wv" style="--c:#2a8fb8;bottom:-2%;animation-duration:1.7s"></div></div>
+    <div class="ttl">${t('go')}</div><div class="skip">${LANG==='ko'?'터치하면 건너뛰기':'Tap to skip'}</div>`;
+  document.body.appendChild(d);
+  let done=false; const end=()=>{ if(done) return; done=true; d.classList.add('out'); setTimeout(()=>d.remove(),520); };
+  d.addEventListener('pointerdown', end);
+  sfx('horn'); setTimeout(()=>sfx('sail'),900);
+  setTimeout(end, 3500);
+}
+
+/* ---------------- board generation ---------------- */
+function rng(seed){ return ()=>{ seed = (Math.imul(seed,1664525)+1013904223)>>>0; return seed/4294967296; }; }
+const COLS = 9, ROWS = 8;
+const gx = c => 75 + c*106.25, gy = r => 72 + r*104;
+const BAY = {cx:560, cy:720, rx:118, ry:168};
+function inBay(x,y,pad=1){ const dx=(x-BAY.cx)/(BAY.rx*pad), dy=(y-BAY.cy)/(BAY.ry*pad); return dx*dx+dy*dy<1; }
+const SHIP_SPOTS = [[915,958],[830,962],[748,952],[676,924],[622,880],[586,822],[562,760]]; // 7 spots → 6 moves
+const SHIP_MOVES = SHIP_SPOTS.length-1;
+
+let BOARD = null;
+function buildBoard(){
+  const R = rng(20261004);
+  const nodes = [], idAt = {};
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const x0 = gx(c), y0 = gy(r);
+    if(inBay(x0,y0,1.12)) continue;
+    const jx = (c===0&&r===0)?0:(R()-.5)*30, jy = (c===0&&r===0)?0:(R()-.5)*26;
+    idAt[c+','+r] = nodes.length;
+    nodes.push({id:nodes.length, c, r, x:x0+jx, y:y0+jy, color:'white', land:-1, adj:[]});
+  }
+  // candidate edges (grid neighbours)
+  const cand = [];
+  nodes.forEach(n=>{
+    [[1,0],[0,1]].forEach(([dc,dr])=>{ const m = idAt[(n.c+dc)+','+(n.r+dr)]; if(m!==undefined) cand.push([n.id,m]); });
+  });
+  // random spanning tree (Kruskal with shuffled edges) + extra loops
+  const par = nodes.map((_,i)=>i); const find = a => par[a]===a ? a : (par[a]=find(par[a]));
+  const sh = cand.map(e=>[R(),e]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+  const edges = [], rest = [];
+  sh.forEach(([a,b])=>{ const fa=find(a), fb=find(b); if(fa!==fb){ par[fa]=fb; edges.push([a,b]); } else rest.push([a,b]); });
+  rest.forEach(e=>{ if(R()<0.42) edges.push(e); });
+  edges.forEach(([a,b])=>{ nodes[a].adj.push(b); nodes[b].adj.push(a); });
+  // landmarks: pick cells, place icon in the cell, attach to a corner node
+  const cells = [];
+  for(let r=0;r<ROWS-1;r++) for(let c=0;c<COLS-1;c++){
+    const cx = (gx(c)+gx(c+1))/2, cy = (gy(r)+gy(r+1))/2;
+    if(inBay(cx,cy,1.25)) continue;
+    cells.push({c,r,cx,cy});
+  }
+  const shuffled = cells.map(x=>[R(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+  const usedCells = [], lands = [];
+  for(const cell of shuffled){
+    if(lands.length>=LAND_N) break;
+    // spread: no two chosen cells side-by-side horizontally/vertically
+    if(usedCells.some(u=>Math.abs(u.c-cell.c)+Math.abs(u.r-cell.r)<=1)) continue;
+    const corners = [[0,0],[1,0],[0,1],[1,1]].map(([dc,dr])=>idAt[(cell.c+dc)+','+(cell.r+dr)])
+      .filter(id=>id!==undefined && id!==0 && nodes[id].land<0);
+    if(!corners.length) continue;
+    const nid = corners[Math.floor(R()*corners.length)];
+    nodes[nid].land = lands.length;
+    const n = nodes[nid];
+    // icon sits in the cell, nudged toward its node
+    lands.push({idx:lands.length, node:nid, ix: cell.cx + (n.x-cell.cx)*0.12, iy: cell.cy + (n.y-cell.cy)*0.12});
+    usedCells.push(cell);
+  }
+  // fallback (should not happen): relax spacing
+  for(const cell of shuffled){
+    if(lands.length>=LAND_N) break;
+    if(usedCells.includes(cell)) continue;
+    const corners = [[0,0],[1,0],[0,1],[1,1]].map(([dc,dr])=>idAt[(cell.c+dc)+','+(cell.r+dr)])
+      .filter(id=>id!==undefined && id!==0 && nodes[id].land<0);
+    if(!corners.length) continue;
+    const nid = corners[0]; nodes[nid].land = lands.length; const n=nodes[nid];
+    lands.push({idx:lands.length, node:nid, ix:cell.cx+(n.x-cell.cx)*.12, iy:cell.cy+(n.y-cell.cy)*.12}); usedCells.push(cell);
+  }
+  // colored magic spaces: 4 each, spread around
+  const free = nodes.filter(n=>n.id!==0 && n.land<0);
+  const pool = free.map(x=>[R(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+  const colors = ['red','green','yellow','blue']; const placed = [];
+  let ci = 0;
+  for(const n of pool){
+    if(placed.length>=16) break;
+    if(placed.some(p=>Math.hypot(p.x-n.x,p.y-n.y)<190 && p.color===colors[ci%4])) continue;
+    if(placed.some(p=>Math.hypot(p.x-n.x,p.y-n.y)<110)) continue;
+    n.color = colors[ci%4]; placed.push(n); ci++;
+  }
+  nodes[0].color = 'start'; nodes[0].y = 102;   // keep the pawns inside the board at START
+  BOARD = {nodes, edges, lands};
+}
+
+/* ---------------- board drawing ---------------- */
+const ATLAS = new Image();
+ATLAS.src = 'assets/sprites.png';
+function drawBoard(){
+  const cv = document.getElementById('boardCanvas'), g = cv.getContext('2d');
+  const R = rng(77);
+  // sand
+  const grd = g.createRadialGradient(480,380,80,500,500,760);
+  grd.addColorStop(0,'#f8e7b9'); grd.addColorStop(1,'#e6c886');
+  g.fillStyle = grd; g.fillRect(0,0,1000,1000);
+  for(let i=0;i<2600;i++){ g.fillStyle = `rgba(${150+R()*60|0},${110+R()*40|0},60,${R()*.18})`; g.fillRect(R()*1000,R()*1000,2,2); }
+  // jungle edges
+  const bush = (x,y,r)=>{ g.fillStyle='#3d9a3f'; g.beginPath(); for(let k=0;k<5;k++){ g.moveTo(x+Math.cos(k*1.3)*r*.5+r*.6, y+Math.sin(k*1.3)*r*.5); g.arc(x+Math.cos(k*1.3)*r*.5, y+Math.sin(k*1.3)*r*.5, r*.6, 0, 7);} g.fill();
+    g.fillStyle='#57b84f'; g.beginPath(); g.arc(x-r*.15,y-r*.2,r*.45,0,7); g.fill(); };
+  for(let x=20;x<1000;x+=70){ bush(x+R()*20, 4+R()*14, 34+R()*14); }
+  for(let y=60;y<840;y+=70){ bush(4+R()*10, y+R()*20, 30+R()*14); bush(996-R()*10, y+R()*20, 30+R()*14); }
+  // sea band at bottom + bay
+  g.save();
+  g.beginPath(); g.moveTo(0,1000); g.lineTo(0,935);
+  for(let x=0;x<=1000;x+=50){ g.quadraticCurveTo(x+25, 900+Math.sin(x/60)*14, x+50, 905+Math.cos(x/80)*10); }
+  g.lineTo(1000,1000); g.closePath();
+  g.ellipse(BAY.cx,BAY.cy,BAY.rx,BAY.ry,0,0,Math.PI*2);
+  g.fillStyle = '#fff6dc'; g.lineWidth = 26; g.strokeStyle = 'rgba(255,255,255,.75)'; g.stroke();
+  const sg = g.createLinearGradient(0,600,0,1000); sg.addColorStop(0,'#6fd0f2'); sg.addColorStop(1,'#2a8fd0');
+  g.fillStyle = sg; g.fill();
+  g.restore();
+  // wave lines
+  g.strokeStyle='rgba(255,255,255,.5)'; g.lineWidth=3;
+  for(let i=0;i<14;i++){ const x=R()*1000, y=930+R()*60; g.beginPath(); g.arc(x,y,14,Math.PI*1.1,Math.PI*1.9); g.stroke(); }
+  for(let i=0;i<6;i++){ const x=BAY.cx-60+R()*120, y=BAY.cy-110+R()*200; g.beginPath(); g.arc(x,y,12,Math.PI*1.1,Math.PI*1.9); g.stroke(); }
+  // pebbles on shore
+  for(let i=0;i<40;i++){ const a=R()*Math.PI*2; const x=BAY.cx+Math.cos(a)*(BAY.rx+18), y=BAY.cy+Math.sin(a)*(BAY.ry+18); if(y>880) continue;
+    g.fillStyle=['#b9b2a5','#9e968a','#d3cdc2'][i%3]; g.beginPath(); g.ellipse(x,y,7+R()*5,5+R()*3,R(),0,7); g.fill(); }
+  // ship track spots
+  SHIP_SPOTS.forEach(([x,y],i)=>{ g.beginPath(); g.arc(x,y,24,0,7); g.fillStyle='rgba(255,255,255,.35)'; g.fill();
+    g.lineWidth=3; g.strokeStyle='rgba(255,255,255,.85)'; g.stroke(); if(i===SHIP_SPOTS.length-1){ g.fillStyle='rgba(255,204,51,.6)'; g.fill(); } });
+  // dock
+  g.fillStyle='#8a5a2b'; g.strokeStyle='#5a3416'; g.lineWidth=3;
+  g.beginPath(); g.roundRect ? g.roundRect(BAY.cx-26,BAY.cy-182,52,44,6) : g.rect(BAY.cx-26,BAY.cy-182,52,44); g.fill(); g.stroke();
+  // dashed paths
+  const N = BOARD.nodes;
+  g.setLineDash([10,9]); g.lineWidth = 4; g.strokeStyle = 'rgba(90,52,22,.6)'; g.lineCap='round';
+  const R2 = rng(5);
+  BOARD.edges.forEach(([a,b])=>{
+    const A=N[a], B=N[b]; const mx=(A.x+B.x)/2, my=(A.y+B.y)/2; const dx=B.x-A.x, dy=B.y-A.y; const L=Math.hypot(dx,dy);
+    const k=(R2()-.5)*0.35*L; g.beginPath(); g.moveTo(A.x,A.y); g.quadraticCurveTo(mx-dy/L*k, my+dx/L*k, B.x,B.y); g.stroke();
+  });
+  g.setLineDash([]);
+  // START label
+  g.save(); g.translate(N[0].x+8, N[0].y-44); g.rotate(-0.12); g.font = 'bold 34px Jua, sans-serif'; g.fillStyle='#5a3416'; g.fillText('START',-30,0); g.restore();
+  // landmark icons
+  if(ATLAS.complete && ATLAS.naturalWidth){
+    const cs = ATLAS.naturalWidth/ATLAS_COLS;
+    BOARD.lands.forEach(l=>{ const i = S.landStart + l.idx; const c=i%6, r=Math.floor(i/6);
+      g.save(); g.shadowColor='rgba(0,0,0,.25)'; g.shadowOffsetY=4; g.shadowBlur=4;
+      g.drawImage(ATLAS, c*cs, r*cs, cs, cs, l.ix-44, l.iy-44, 88, 88); g.restore(); });
+    // skull rock decoration near start? small chest on dock
+    const ci = S.chest, cc=ci%6, cr=Math.floor(ci/6);
+    g.drawImage(ATLAS, cc*cs, cr*cs, cs, cs, BAY.cx-30, BAY.cy-215, 60, 60);
+  }
+}
+
+/* ---------------- game state ---------------- */
+let G = null;
+const sel = { picks:[true,true,false,false,false], names:[null,null,null,null,null], diff:'normal' };
+function shuffle(a,R=Math.random){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(R()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function newGame(cfg=sel){
+  const players = [];
+  cfg.picks.forEach((on,i)=>{ if(on) players.push({pi:i, name: cfg.names[i], node:0, treasures:[]}); });
+  const cluesPer = cfg.diff==='easy' ? 2 : 3;
+  const shipShells = cfg.diff==='hard' ? 8 : 6;
+  const landOrder = shuffle([...Array(LAND_N).keys()]);
+  const trOrder = shuffle([...Array(TREASURE_N).keys()]);
+  const hunts = players.map((_,h)=>({ n:h+1, clues: landOrder.slice(h*cluesPer,(h+1)*cluesPer), idx:0, treasure: trOrder[h], found:false, owner:-1 }));
+  const bag = [];
+  const whites = {1:10,2:8,3:10,4:7,5:7};
+  for(const k in whites) for(let i=0;i<whites[k];i++) bag.push({type:'white', n:+k});
+  ['red','green','yellow','blue'].forEach(c=>{ bag.push({type:'magic', color:c}); });
+  for(let i=0;i<shipShells;i++) bag.push({type:'ship'});
+  shuffle(bag);
+  G = { players, hunts, bag, cur:0, mover:-1, giver:-1, shell:null, phase:'draw', ship:0, finalLeft:null, over:false, reach:new Set() };
+}
+const P = i => G.players[i];
+const pname = p => p.name || t('pirates')[p.pi];
+
+/* ---------------- rendering ---------------- */
+function buildLayer(){
+  const layer = document.getElementById('layer'); layer.innerHTML = '';
+  BOARD.nodes.forEach(n=>{
+    const d = document.createElement('div');
+    d.className = 'node ' + (n.color==='start' ? 'start' : n.land>=0 ? 'land' : n.color);
+    d.style.left = n.x/10+'%'; d.style.top = n.y/10+'%'; d.dataset.id = n.id;
+    d.addEventListener('click', ()=> onNodeClick(n.id));
+    layer.appendChild(d); n.el = d;
+  });
+  const ship = document.createElement('div'); ship.id='shipEl'; ship.innerHTML = `<div class="in spr" style="background-position:${sprPos(S.ship)}"></div>`;
+  layer.appendChild(ship);
+  G.players.forEach((p,i)=>{ const e = document.createElement('div'); e.className='pawn spr'; setSpr(e, S.pirates[p.pi]); layer.appendChild(e); p.el = e; });
+}
+function placePawns(){
+  if(NET.mode==='host') markDirty();
+  const groups = {};
+  G.players.forEach((p,i)=>{ (groups[p.node] = groups[p.node]||[]).push(i); });
+  for(const nid in groups){
+    const arr = groups[nid], n = BOARD.nodes[nid];
+    arr.forEach((pi,k)=>{ const off = (k-(arr.length-1)/2)*26; const p=P(pi); p.el.style.left=(n.x+off)/10+'%'; p.el.style.top=n.y/10+'%'; });
+  }
+  G.players.forEach((p,i)=>p.el.classList.toggle('cur', i===(G.mover>=0?G.mover:G.cur)));
+}
+function placeShip(){ if(NET.mode==='host') markDirty(); const [x,y] = SHIP_SPOTS[G.ship]; const e=document.getElementById('shipEl'); e.style.left=x/10+'%'; e.style.top=y/10+'%'; }
+function renderX(){
+  if(NET.mode==='host') markDirty();
+  document.querySelectorAll('.xmark').forEach(e=>e.remove());
+  const layer = document.getElementById('layer');
+  G.hunts.forEach(h=>{ if(h.found) return; const l = BOARD.lands[h.clues[h.idx]]; const n = BOARD.nodes[l.node];
+    const x = document.createElement('div'); x.className='xmark spr'; setSpr(x,S.x); x.style.left=n.x/10+'%'; x.style.top=n.y/10+'%';
+    x.innerHTML = `<div class="tag">${h.n}</div>`; layer.appendChild(x); });
+}
+function renderReach(){ if(NET.mode==='host') markDirty(); const ok = canAct(); BOARD.nodes.forEach(n=> n.el.classList.toggle('reach', ok && G.reach.has(n.id))); }
+function shellHTML(s){
+  if(!s) return '';
+  let inner = `<div class="base spr" style="background-position:${sprPos(S.shell)}"></div>`;
+  if(s.type==='magic'){ const col = {red:'#ff4a3d',green:'#2fd16a',yellow:'#ffd21f',blue:'#2f8fff'}[s.color];
+    inner += `<div class="tint" style="background:${col};-webkit-mask-position:${sprPos(S.shell)};mask-position:${sprPos(S.shell)}"></div>`; }
+  if(s.type==='white') inner += `<div class="dots">${'<i></i>'.repeat(s.n)}</div>`;
+  if(s.type==='ship') inner += `<div class="mini spr" style="background-position:${sprPos(S.ship)}"></div>`;
+  return `<div class="shell">${inner}</div>`;
+}
+function renderSide(){
+  if(NET.mode==='host') markDirty();
+  const online = NET.mode!=='off', mine = online && canAct();
+  if(mine && !renderSide._m) sfx('turn'); renderSide._m = mine;
+  document.getElementById('turnCard').classList.toggle('mine', mine);
+  const curP = P(G.mover>=0 ? G.mover : G.cur);
+  setSpr(document.getElementById('turnAvatar'), S.pirates[curP.pi]);
+  document.getElementById('turnName').innerHTML = t('turn',{name:pname(P(G.cur))}) + (mine ? `<span class="youTag">${t('yourTurn')}</span>` : '');
+  document.getElementById('finalNote').innerHTML = G.finalLeft!==null ? t('finalTurns',{n:G.finalLeft}) : '';
+  const bagBtn = document.getElementById('bagBtn');
+  bagBtn.disabled = G.phase!=='draw' || G.over || !canAct();
+  document.getElementById('bagLeft').textContent = t('bagLeft',{n:G.bag.length});
+  const sv = document.getElementById('shellView');
+  if(G.shell){ sv.innerHTML = shellHTML(G.shell); sv.classList.add('show'); } else { sv.classList.remove('show'); sv.innerHTML=''; }
+  let m = '';
+  if(G.over) m = '';
+  else if(G.phase==='draw') m = (online && !mine) ? t('waiting',{name:pname(P(G.cur))}) : t('drawPrompt');
+  else if(G.phase==='move' && G.shell){
+    if(G.mover!==G.cur) m = t('giftMove',{to:pname(P(G.mover)), from:pname(P(G.cur))}) + '<br>';
+    m += G.shell.type==='white' ? t('white',{n:G.shell.n}) : t('magic',{color:t(G.shell.color)});
+  } else if(G.phase==='ship') m = t('shipShell');
+  if(online && !mine && G.phase==='move' && G.shell) m = t('waitingMove',{name:pname(P(G.mover))});
+  document.getElementById('msg').innerHTML = m;
+  // gift
+  const gr = document.getElementById('giftRow');
+  if(G.phase==='move' && G.mover===G.cur && !G.over && G.players.length>1 && canAct()){
+    gr.innerHTML = `<span>${t('giftLabel')}</span>` + G.players.map((p,i)=> (i===G.cur || p.away) ? '' :
+      `<button class="giftBtn" data-gift="${i}"><span class="spr" style="background-position:${sprPos(S.pirates[p.pi])}"></span>${pname(p)}</button>`).join('');
+    gr.classList.add('show');
+    gr.querySelectorAll('[data-gift]').forEach(b=> b.onclick = ()=> giftTo(+b.dataset.gift));
+  } else { gr.classList.remove('show'); gr.innerHTML=''; }
+  // ship track
+  document.getElementById('shipTrack').innerHTML =
+    Array.from({length:SHIP_MOVES},(_,i)=>`<div class="dot ${i<G.ship?'on':''}"></div>`).join('') + sprDiv(S.ship);
+  // hunts
+  const L = t('lands'), T = t('treasures');
+  document.getElementById('huntList').innerHTML = G.hunts.map(h=>{
+    const clues = h.clues.map((li,k)=>{
+      if(k<h.idx || h.found) return `<div class="clue done spr" title="${L[li]}" style="background-position:${sprPos(S.landStart+li)}"></div>`;
+      if(k===h.idx) return `<div class="clue cur spr" title="${L[li]}" style="background-position:${sprPos(S.landStart+li)}"></div>`;
+      return `<div class="clue hidden"></div>`;
+    }).join('');
+    const right = h.found ? `<div class="tr spr" title="${T[h.treasure]}" style="background-position:${sprPos(S.treasureStart+h.treasure)}"></div>` : '';
+    return `<div class="hunt ${h.found?'found':''}"><div class="chest spr" style="background-position:${sprPos(S.chest)}"><div class="num">${h.n}</div></div><div class="clues">${clues}</div>${right}</div>`;
+  }).join('');
+  // crew
+  document.getElementById('crewList').innerHTML = G.players.map((p,i)=>
+    `<div class="crewRow ${i===G.cur?'cur':''} ${p.away?'away':''}">${sprDiv(S.pirates[p.pi])}<span class="nm">${pname(p)}${(online && p.pi===NET.myPi)?` (${t('me')})`:''}${p.away?' 💤':''}</span><span class="got">${p.treasures.map(tr=>sprDiv(S.treasureStart+tr)).join('')}</span></div>`).join('');
+}
+function renderAll(){ if(!G) return; placePawns(); placeShip(); renderX(); renderReach(); renderSide(); }
+
+/* ---------------- modal ---------------- */
+let modalTok = 0;
+function closeModal(){ modalTok++; document.getElementById('modal').classList.remove('on'); }
+function modal({art=null, artHTML=null, title='', text='', buttons=[{label:t('ok')}], glow=false, auto=0}){
+  const tok = ++modalTok;
+  return new Promise(res=>{
+    const a = document.getElementById('modalArt');
+    a.className = 'big' + (glow?' glow':'');
+    a.innerHTML = artHTML || (art!==null ? `<div class="spr" style="width:100%;height:100%;background-position:${sprPos(art)}"></div>` : '');
+    a.style.display = (art!==null||artHTML) ? '' : 'none';
+    document.getElementById('modalTitle').innerHTML = title;
+    document.getElementById('modalText').innerHTML = text;
+    const bx = document.getElementById('modalBtns'); bx.innerHTML='';
+    buttons.forEach((b,i)=>{ const e=document.createElement('button'); e.className='btn small'+(i>0?' sec':''); e.innerHTML=b.label;
+      e.onclick=()=>{ if(tok===modalTok) document.getElementById('modal').classList.remove('on'); res(b.value); }; bx.appendChild(e); });
+    document.getElementById('modal').classList.add('on');
+    if(auto>0) setTimeout(()=>{ if(tok===modalTok){ document.getElementById('modal').classList.remove('on'); } res(undefined); }, auto);
+  });
+}
+const wait = ms => new Promise(r=>setTimeout(r,ms));
+
+/* ---------------- game flow ---------------- */
+/* sounds / effects that every online player should see+hear */
+function gsfx(type){ sfx(type); if(NET.mode==='host') netBroadcast({t:'sfx',type}); }
+function doFx(kind,arg){
+  if(kind==='shake'){ const b=document.getElementById('bagBtn'); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); }
+  else if(kind==='jump'){ const p=G&&G.players[arg]; if(p&&p.el){ p.el.classList.remove('jump'); void p.el.offsetWidth; p.el.classList.add('jump'); } }
+  else if(kind==='confetti') confetti();
+}
+function fx(kind,arg){ doFx(kind,arg); if(NET.mode==='host') netBroadcast({t:'fx',kind,arg}); }
+
+/* who may act right now? (always true offline) */
+function myIdx(){ return (NET.mode==='off'||!G) ? -1 : G.players.findIndex(p=>p.pi===NET.myPi); }
+function canAct(){
+  if(!G || G.over) return false;
+  if(NET.mode==='off') return true;
+  const me = myIdx(); if(me<0) return false;
+  return G.phase==='draw' ? G.cur===me : G.phase==='move' ? G.mover===me : false;
+}
+
+/* popup events: built from data so each device shows them in its own language */
+function evOpts(ev){
+  const L=t('lands'), T=t('treasures');
+  if(ev.k==='clue') return {art:S.landStart+ev.land, title:`${t('clueFound')} (${t('huntN',{n:ev.n})})`, text:t('clueNext',{place:L[ev.land]})};
+  if(ev.k==='treasure'){ const p=P(ev.who); return {art:S.treasureStart+ev.tr, glow:true, title:t('treasureFound'), text:t('treasureGot',{name:pname(p), treasure:T[ev.tr]})}; }
+  if(ev.k==='ship') return {art:S.ship, title:t('shipArrive'), text:t('shipArriveText')};
+  if(ev.k==='bagEmpty') return {title:t('bagEmpty'), text:''};
+  if(ev.k==='end'){
+    const win = ev.win, guest = NET.mode==='client';
+    const art = win ? `<div style="display:flex;gap:4px;justify-content:center;align-items:flex-end;height:100%">${G.hunts.map(h=>`<div class="spr" style="width:${Math.min(80,360/G.hunts.length)}px;height:${Math.min(80,360/G.hunts.length)}px;background-position:${sprPos(S.treasureStart+h.treasure)}"></div>`).join('')}</div>`
+                    : `<div class="spr" style="width:100%;height:100%;background-position:${sprPos(S.ship)};transform:scaleX(-1)"></div>`;
+    return {artHTML:art, glow:win, title:win?t('winTitle'):t('loseTitle'), text:(win?t('winText'):t('loseText')) + (guest?`<br><small>${t('waitHostEnd')}</small>`:''),
+      buttons: guest ? [{label:t('leave'),value:'home'}] : [{label:t('again'),value:'again'},{label:t('home'),value:'home'}]};
+  }
+  return {title:'',text:''};
+}
+function showEv(ev){ const o = evOpts(ev); if(NET.mode!=='off' && ev.k!=='end') o.auto = 3200; return modal(o); }
+function announce(ev){ if(NET.mode==='host') netBroadcast({t:'evt',ev}); return showEv(ev); }
+
+async function drawShell(force=false){
+  if(NET.mode==='client'){ if(canAct()) netSend({t:'draw'}); return; }
+  if(!G || G.phase!=='draw' || G.over) return;
+  if(NET.mode==='host' && !force && !canAct()) return;
+  if(!G.bag.length){ await announce({k:'bagEmpty'}); return endGame(false); }
+  fx('shake');
+  gsfx('draw');
+  G.phase = 'anim'; renderSide(); await wait(420);
+  G.shell = G.bag.pop();
+  if(G.shell.type==='ship'){
+    G.phase = 'ship'; renderSide(); gsfx('ship'); await wait(500);
+    let justArrived = false;
+    if(G.ship < SHIP_MOVES){ G.ship++; placeShip(); renderSide(); await wait(1000); }
+    if(G.ship>=SHIP_MOVES && G.finalLeft===null){ justArrived = true; G.finalLeft = G.players.length;
+      renderSide(); await announce({k:'ship'}); }
+    return endTurn(justArrived);
+  }
+  G.mover = G.cur; G.phase = 'move';
+  computeReach();
+  renderAll();
+}
+function computeReach(){
+  const s = G.shell, from = P(G.mover).node; G.reach = new Set();
+  if(s.type==='white'){
+    const dist = {[from]:0}, q=[from];
+    while(q.length){ const u=q.shift(); if(dist[u]>=s.n) continue; for(const v of BOARD.nodes[u].adj){ if(dist[v]===undefined){ dist[v]=dist[u]+1; q.push(v);} } }
+    for(const k in dist) if(+k!==from) G.reach.add(+k);
+  } else if(s.type==='magic'){
+    BOARD.nodes.forEach(n=>{ if(n.color===s.color && n.id!==from) G.reach.add(n.id); });
+  }
+}
+function pathTo(from,to){
+  const prev={[from]:-1}, q=[from];
+  while(q.length){ const u=q.shift(); if(u===to) break; for(const v of BOARD.nodes[u].adj) if(prev[v]===undefined){ prev[v]=u; q.push(v);} }
+  const path=[]; let c=to; while(c!==from && c!==undefined && c!==-1){ path.unshift(c); c=prev[c]; } return path;
+}
+function giftTo(i, force=false){
+  if(NET.mode==='client'){ if(canAct()) netSend({t:'gift', to:i}); return; }
+  if(!G || G.phase!=='move' || G.mover!==G.cur) return;
+  if(NET.mode==='host' && !force && !canAct()) return;
+  if(!Number.isInteger(i) || i<0 || i>=G.players.length || i===G.cur || G.players[i].away) return;
+  gsfx('gift'); G.mover = i; computeReach(); renderAll();
+}
+async function onNodeClick(id, force=false){
+  if(NET.mode==='client'){ if(canAct() && G.reach.has(id)) netSend({t:'move', id}); return; }
+  if(!G || G.phase!=='move' || !G.reach.has(id)) return;
+  if(NET.mode==='host' && !force && !canAct()) return;
+  const p = P(G.mover); G.phase='anim'; G.reach = new Set(); renderReach(); renderSide();
+  if(G.shell.type==='white'){
+    for(const step of pathTo(p.node,id)){ p.node = step; placePawns(); gsfx('step'); await wait(220); }
+  } else {
+    gsfx('magic'); fx('jump', G.mover); await wait(220);
+    p.node = id; placePawns(); await wait(350);
+  }
+  await checkClues(G.mover);
+  endTurn(false);
+}
+async function checkClues(pi){
+  const p = P(pi), node = BOARD.nodes[p.node];
+  if(node.land<0) return;
+  for(const h of G.hunts){
+    if(h.found) continue;
+    if(h.clues[h.idx]!==node.land) continue;
+    gsfx('clue');
+    h.idx++;
+    if(h.idx >= h.clues.length){ h.found = true; h.owner = pi; }
+    renderSide(); renderX();
+    if(!h.found){
+      await announce({k:'clue', n:h.n, land:h.clues[h.idx]});
+    } else {
+      p.treasures.push(h.treasure); gsfx('treasure'); renderAll();
+      await announce({k:'treasure', who:pi, tr:h.treasure});
+    }
+    renderAll();
+  }
+}
+function endTurn(justArrived){
+  G.shell = null; G.mover = -1; G.reach = new Set();
+  if(G.hunts.every(h=>h.found)) return endGame(true);
+  if(G.finalLeft!==null && !justArrived){ G.finalLeft--; if(G.finalLeft<=0) return endGame(false); }
+  G.cur = (G.cur+1) % G.players.length;
+  G.phase = 'draw';
+  renderAll();
+}
+async function endGame(win){
+  G.over = true; G.phase='over'; renderAll();
+  if(win){ gsfx('win'); fx('confetti'); }
+  else gsfx('lose');
+  const v = await announce({k:'end', win});
+  if(NET.mode==='host'){ if(v==='again') hostStartGame(); else { leaveOnline(); show('title'); } return; }
+  if(v==='again') startGame(); else show('title');
+}
+
+/* confetti */
+function confetti(){
+  const c = document.getElementById('confetti'), g = c.getContext('2d'); c.width=innerWidth; c.height=innerHeight;
+  const parts = Array.from({length:160},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height*.5,vx:(Math.random()-.5)*3,vy:2+Math.random()*3,r:Math.random()*6,
+    col:['#ffcc33','#e5483b','#2fb35a','#2f86d6','#fff'][Math.random()*5|0],a:Math.random()*6}));
+  let f=0; (function loop(){ g.clearRect(0,0,c.width,c.height);
+    parts.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.a+=.1; g.save(); g.translate(p.x,p.y); g.rotate(p.a); g.fillStyle=p.col; g.fillRect(-4,-2,8+p.r,5); g.restore(); });
+    if(++f<260) requestAnimationFrame(loop); else g.clearRect(0,0,c.width,c.height); })();
+}
+
+/* ---------------- screens ---------------- */
+let rulesReturn = 'title';
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id));
+  playMusic(id==='game' ? 'play' : (id==='rulesScr' && rulesReturn==='game') ? 'play' : 'home');
+}
+function renderSetup(){
+  const box = document.getElementById('crewPick'); if(!box) return;
+  box.innerHTML = S.pirates.map((si,i)=>`
+    <div class="pick ${sel.picks[i]?'sel':''}" data-i="${i}">
+      ${sprDiv(si)}
+      <input maxlength="10" data-n="${i}" value="${(sel.names[i]||t('pirates')[i]).replace(/"/g,'&quot;')}">
+    </div>`).join('');
+  box.querySelectorAll('.pick').forEach(el=> el.addEventListener('click', e=>{
+    if(e.target.tagName==='INPUT') return; const i=+el.dataset.i; sel.picks[i]=!sel.picks[i]; el.classList.toggle('sel', sel.picks[i]); }));
+  box.querySelectorAll('input').forEach(inp=> inp.addEventListener('input', ()=>{ const i=+inp.dataset.n; const v=inp.value.trim();
+    sel.names[i] = (v && v!==t('pirates')[i]) ? v : null; }));
+}
+function updateDiffDesc(){
+  document.querySelectorAll('#diffSeg button').forEach(b=>b.classList.toggle('on', b.dataset.d===sel.diff));
+  document.getElementById('diffDesc').textContent = t({easy:'diffEasy',normal:'diffNormal',hard:'diffHard'}[sel.diff]);
+}
+function startGame(){
+  if(sel.picks.filter(Boolean).length<2){ modal({title:t('needTwo'), text:''}); return; }
+  newGame(); buildLayer(); drawBoard(); show('game'); renderAll(); sailIntro();
+}
+function titleArt(){
+  const a = document.getElementById('titleArt');
+  a.innerHTML = `<div class="spr ship" style="background-position:${sprPos(S.ship)}"></div>` +
+    [0,1,3,4].map((pi,k)=>`<div class="spr p" style="background-position:${sprPos(S.pirates[pi])};left:${[0,14,66,80][k]}%;animation-delay:${k*.3}s"></div>`).join('');
+}
+
+/* =====================================================================
+   ONLINE CO-OP  (PeerJS, host-authoritative)
+   - the host's device runs the whole game, friends send "intents"
+   - every state change is pushed to all players as a snapshot
+   ===================================================================== */
+const NET = { mode:'off', peer:null, code:'', conns:{}, peerSeat:{}, myPi:-1, nick:'', seats:[null,null,null,null,null],
+              lobby:{seats:[null,null,null,null,null],diff:'normal'}, diff:'normal', started:false, hostConn:null, botTimer:null, dirty:false, last:{}, lastHost:0, hbTimer:null };
+const ROOM_PREFIX = 'haejeok-hunt-';
+const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const QS = new URLSearchParams(location.search);
+function peerOpts(){
+  const o = {debug:0, config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'}]}};
+  if(QS.get('peerhost')){ o.host=QS.get('peerhost'); o.port=+(QS.get('peerport')||9000); o.path='/'; o.secure=QS.get('peersecure')==='1'; }   // (testing only)
+  return o;
+}
+function netMsg(k, err=false, v={}){ const el=document.getElementById('onlineMsg'); el.textContent = k ? t(k,v) : ''; el.classList.toggle('err', !!err); }
+function newCode(){ let c=''; for(let i=0;i<4;i++) c+=CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]; return c; }
+function netSend(msg){ try{ if(NET.hostConn && NET.hostConn.open) NET.hostConn.send(msg); }catch(e){} }
+function toAll(msg){ for(const pi in NET.conns){ const c=NET.conns[pi]; try{ if(c && c.open) c.send(msg); }catch(e){} } }
+function netBroadcast(msg){ flushNow(); toAll(msg); }
+function markDirty(){ if(NET.dirty) return; NET.dirty=true; setTimeout(flushNow,0); }
+function flushNow(){ if(!NET.dirty) return; NET.dirty=false; if(NET.mode==='host' && G && NET.started) toAll({t:'state', snap:snapshot()}); }
+function snapshot(){
+  return { players:G.players.map(p=>({pi:p.pi,name:p.name,node:p.node,treasures:p.treasures,away:!!p.away})),
+           hunts:G.hunts, cur:G.cur, mover:G.mover, shell:G.shell, phase:G.phase, ship:G.ship, finalLeft:G.finalLeft, over:G.over,
+           reach:[...G.reach], bagLen:G.bag.length };
+}
+function applySnap(sn, first){
+  if(first){
+    G = { players:sn.players.map(p=>({...p})), hunts:sn.hunts, bag:[], giver:-1, reach:new Set() };
+    renderSide._m = false; closeModal();
+  } else {
+    sn.players.forEach((q,i)=>{ const p=G.players[i]; p.node=q.node; p.treasures=q.treasures; p.name=q.name; p.away=q.away; });
+    G.hunts = sn.hunts;
+  }
+  Object.assign(G, {cur:sn.cur, mover:sn.mover, shell:sn.shell, phase:sn.phase, ship:sn.ship, finalLeft:sn.finalLeft, over:sn.over});
+  G.bag = new Array(sn.bagLen); G.reach = new Set(sn.reach);
+  if(first){ buildLayer(); drawBoard(); show('game'); sailIntro(); }
+  renderAll();
+}
+function resetNet(){
+  stopBots(); if(NET.hbTimer){ clearInterval(NET.hbTimer); NET.hbTimer=null; }
+  const pr = NET.peer; if(pr) setTimeout(()=>{ try{pr.destroy()}catch(e){} }, 300);
+  Object.assign(NET, {mode:'off', peer:null, code:'', conns:{}, peerSeat:{}, myPi:-1, seats:[null,null,null,null,null], started:false, hostConn:null, dirty:false, last:{}, lastHost:0});
+}
+function leaveOnline(){ if(NET.mode==='host') netBroadcast({t:'bye'}); resetNet(); closeModal(); G=null; }
+function hostGone(){ resetNet(); closeModal(); G=null; show('title'); modal({title:t('hostLeft'), text:'', buttons:[{label:t('ok')}]}); }
+function ensureLib(){ if(typeof Peer==='undefined'){ netMsg('noModule', true); return false; } return true; }
+function readNick(){ const v=document.getElementById('nickInput').value.trim().slice(0,10); NET.nick=v; try{ localStorage.setItem('pirate_nick', v); }catch(e){} return v; }
+
+/* ---------- host ---------- */
+function createRoom(tries=0){
+  if(!ensureLib()) return;
+  readNick(); netMsg('connecting'); if(NET.peer) resetNet();
+  const code = newCode(), peer = new Peer(ROOM_PREFIX+code, peerOpts()); NET.peer = peer; NET.code = code;
+  let opened = false; const to = setTimeout(()=>{ if(!opened){ netMsg('netFail', true); resetNet(); } }, 12000);
+  peer.on('open', ()=>{ opened=true; clearTimeout(to);
+    Object.assign(NET, {mode:'host', myPi:0, seats:[{id:'host',nick:NET.nick},null,null,null,null], diff:'normal', started:false, conns:{}, peerSeat:{}});
+    NET.last = {}; NET.hbTimer = setInterval(hostBeat, 3000);
+    netMsg(''); show('lobby'); renderLobby(); });
+  peer.on('connection', hostAccept);
+  peer.on('error', e=>{ clearTimeout(to);
+    if(e.type==='unavailable-id' && tries<6){ resetNet(); return createRoom(tries+1); }
+    if(!opened){ netMsg('netFail', true); resetNet(); } });
+  peer.on('disconnected', ()=>{ try{ peer.reconnect(); }catch(e){} });
+}
+function hostAccept(conn){
+  conn.on('data', msg=>hostMsg(conn,msg));
+  conn.on('close', ()=>hostDrop(conn));
+  conn.on('error', ()=>hostDrop(conn));
+}
+function hostMsg(conn,msg){
+  if(!msg || typeof msg!=='object') return;
+  const pi = NET.peerSeat[conn.peer];
+  if(msg.t==='hello'){
+    if(pi!==undefined) return;
+    if(NET.started){ conn.send({t:'full',why:'started'}); setTimeout(()=>conn.close(),400); return; }
+    const free = NET.seats.findIndex(s=>!s);
+    if(free<0){ conn.send({t:'full',why:'full'}); setTimeout(()=>conn.close(),400); return; }
+    NET.seats[free] = {id:conn.peer, nick:String(msg.nick||'').slice(0,10)}; NET.peerSeat[conn.peer]=free; NET.conns[free]=conn; NET.last[free]=Date.now();
+    broadcastLobby(); return;
+  }
+  if(pi===undefined) return;
+  NET.last[pi] = Date.now();
+  if(msg.t==='ping') { reviveSeat(pi); return; }
+  if(!NET.started){
+    if(msg.t==='pick') seatMove(pi, msg.pi);
+    return;
+  }
+  if(!G) return;
+  reviveSeat(pi);
+  const idx = G.players.findIndex(p=>p.pi===pi); if(idx<0) return;
+  if(msg.t==='draw' && G.phase==='draw' && G.cur===idx) drawShell(true);
+  else if(msg.t==='move' && G.phase==='move' && G.mover===idx && G.reach.has(msg.id)) onNodeClick(msg.id,true);
+  else if(msg.t==='gift' && G.phase==='move' && G.mover===G.cur && G.cur===idx) giftTo(msg.to,true);
+}
+function hostDrop(conn){
+  const pi = NET.peerSeat[conn.peer]; if(pi===undefined) return;
+  delete NET.peerSeat[conn.peer]; delete NET.conns[pi];
+  if(!NET.started){ NET.seats[pi]=null; broadcastLobby(); return; }
+  const idx = G ? G.players.findIndex(p=>p.pi===pi) : -1;
+  if(idx>=0){ G.players[idx].away = true; renderAll(); }   // a helper bot plays for them
+}
+/* heartbeat: tab closed / phone locked / signal lost without a clean "close" */
+function hostBeat(){
+  if(NET.mode!=='host') return;
+  toAll({t:'ping'});
+  const now = Date.now();
+  for(const pi in NET.conns){
+    if(now - (NET.last[pi]||now) <= 12000) continue;
+    const c = NET.conns[pi];
+    if(!NET.started){ try{ c.close(); }catch(e){} hostDrop(c); }
+    else if(G){ const idx=G.players.findIndex(p=>p.pi===+pi); if(idx>=0 && !G.players[idx].away){ G.players[idx].away=true; renderAll(); } }
+  }
+}
+function reviveSeat(pi){
+  if(!G || !NET.started) return;
+  const idx = G.players.findIndex(p=>p.pi===pi);
+  if(idx>=0 && G.players[idx].away && NET.conns[pi]){ G.players[idx].away=false; renderAll(); }
+}
+function seatMove(from,to){
+  if(NET.started || !Number.isInteger(to) || to<0 || to>4 || NET.seats[to] || !NET.seats[from]) return;
+  NET.seats[to]=NET.seats[from]; NET.seats[from]=null;
+  if(NET.seats[to].id==='host') NET.myPi=to; else { NET.peerSeat[NET.seats[to].id]=to; NET.conns[to]=NET.conns[from]; delete NET.conns[from]; }
+  broadcastLobby();
+}
+function broadcastLobby(){
+  const seats = NET.seats.map(s=>s?{nick:s.nick,host:s.id==='host'}:null);
+  for(const pi in NET.conns){ const c=NET.conns[pi]; try{ if(c&&c.open) c.send({t:'lobby', seats, diff:NET.diff, you:+pi}); }catch(e){} }
+  renderLobby();
+}
+function hostStartGame(){
+  NET.seats.forEach((s,i)=>{ if(s && s.id!=='host' && !(NET.conns[i] && NET.conns[i].open)){ NET.seats[i]=null; } });
+  const picks = NET.seats.map(s=>!!s);
+  if(picks.filter(Boolean).length<2){
+    if(NET.started){ NET.started=false; G=null; closeModal(); toAll({t:'toLobby'}); show('lobby'); broadcastLobby(); }
+    else modal({title:t('needTwoOnline'), text:''});
+    return;
+  }
+  newGame({picks, names:NET.seats.map(s=>(s&&s.nick)?s.nick:null), diff:NET.diff});
+  NET.started = true; closeModal(); renderSide._m=false;
+  buildLayer(); drawBoard(); show('game'); renderAll(); sailIntro();
+  NET.dirty = false; toAll({t:'start', snap:snapshot()});
+  startBots();
+}
+
+/* ---------- helper bot: plays for players who lost their connection ---------- */
+function startBots(){ stopBots(); NET.botTimer = setInterval(botTick, 1400); }
+function stopBots(){ if(NET.botTimer){ clearInterval(NET.botTimer); NET.botTimer=null; } }
+function botTick(){
+  if(NET.mode!=='host' || !G || G.over) return;
+  if(G.phase==='draw' && P(G.cur).away) drawShell(true);
+  else if(G.phase==='move' && P(G.mover).away){ const id = botPick(); if(id>=0) onNodeClick(id,true); }
+}
+function botPick(){
+  const r=[...G.reach]; if(!r.length) return -1;
+  const xs = G.hunts.filter(h=>!h.found).map(h=>BOARD.lands[h.clues[h.idx]].node);
+  const hit = r.find(n=>xs.includes(n)); if(hit!==undefined) return hit;
+  const dist=(a,b)=>{ const d={[a]:0},q=[a]; while(q.length){ const u=q.shift(); if(u===b) return d[u]; for(const v of BOARD.nodes[u].adj) if(d[v]===undefined){ d[v]=d[u]+1; q.push(v); } } return 99; };
+  let best=r[0], bd=1e9; for(const n of r) for(const x of xs){ const dd=dist(n,x); if(dd<bd){ bd=dd; best=n; } }
+  return best;
+}
+
+/* ---------- guest ---------- */
+function joinRoom(){
+  if(!ensureLib()) return;
+  readNick();
+  const code = document.getElementById('codeInput').value.trim().toUpperCase();
+  if(code.length!==4){ netMsg('codeShort', true); return; }
+  netMsg('connecting'); if(NET.peer) resetNet();
+  const peer = new Peer(undefined, peerOpts()); NET.peer = peer; NET.code = code;
+  let ok = false; const to = setTimeout(()=>{ if(!ok){ netMsg('netFail', true); resetNet(); } }, 15000);
+  peer.on('open', ()=>{
+    const conn = peer.connect(ROOM_PREFIX+code, {reliable:true, serialization:'json'}); NET.hostConn = conn;
+    conn.on('open', ()=>{ ok=true; clearTimeout(to); NET.mode='client'; NET.started=false; NET.lastHost=Date.now(); conn.send({t:'hello', nick:NET.nick});
+      NET.hbTimer = setInterval(()=>{ netSend({t:'ping'}); if(NET.mode==='client' && Date.now()-NET.lastHost>15000) hostGone(); }, 3000); });
+    conn.on('data', clientMsg);
+    conn.on('close', ()=>{ if(NET.mode==='client') hostGone(); });
+    conn.on('error', ()=>{});
+  });
+  peer.on('error', e=>{ clearTimeout(to);
+    if(e.type==='peer-unavailable'){ netMsg('roomNotFound', true); resetNet(); }
+    else if(!ok){ netMsg('netFail', true); resetNet(); } });
+}
+function clientMsg(msg){
+  if(!msg || typeof msg!=='object') return;
+  NET.lastHost = Date.now();
+  switch(msg.t){
+    case 'ping': break;
+    case 'full': netMsg(msg.why==='started' ? 'roomStarted' : 'roomFull', true); resetNet(); show('onlineScr'); break;
+    case 'lobby': NET.myPi=msg.you; NET.lobby={seats:msg.seats,diff:msg.diff}; NET.diff=msg.diff;
+      if(!NET.started){ if(!document.getElementById('lobby').classList.contains('on')) show('lobby'); renderLobby(); } break;
+    case 'start': NET.started=true; applySnap(msg.snap, true); break;
+    case 'state': if(G) applySnap(msg.snap, false); break;
+    case 'evt': showEv(msg.ev).then(v=>{ if(msg.ev.k==='end' && v==='home'){ leaveOnline(); show('title'); } }); break;
+    case 'sfx': sfx(msg.type); break;
+    case 'fx': doFx(msg.kind, msg.arg); break;
+    case 'toLobby': NET.started=false; closeModal(); G=null; show('lobby'); renderLobby(); break;
+    case 'bye': hostGone(); break;
+  }
+}
+
+/* ---------- lobby screen ---------- */
+function renderLobby(){
+  const box = document.getElementById('lobbyPick'); if(!box || NET.mode==='off') return;
+  const host = NET.mode==='host';
+  const seats = host ? NET.seats.map(s=>s?{nick:s.nick,host:s.id==='host'}:null) : NET.lobby.seats;
+  const diff = host ? NET.diff : NET.lobby.diff;
+  document.getElementById('roomCode').textContent = NET.code || '----';
+  box.innerHTML = S.pirates.map((si,i)=>{
+    const s = seats[i], mine = i===NET.myPi;
+    const who = s ? `${(s.nick||t('pirates')[i]).replace(/</g,'&lt;')}${s.host?' 👑':''}${mine?` (${t('me')})`:''}` : t('empty');
+    return `<div class="pick ${mine?'mine':s?'taken':'free'}" data-i="${i}">${sprDiv(si)}<div class="who">${who}</div></div>`;
+  }).join('');
+  box.querySelectorAll('.pick.free').forEach(el=> el.onclick = ()=>{ const i=+el.dataset.i; if(host) seatMove(NET.myPi,i); else netSend({t:'pick',pi:i}); });
+  document.querySelectorAll('#lobbyDiff button').forEach(b=>{ b.classList.toggle('on', b.dataset.d===diff); b.style.pointerEvents = host ? '' : 'none'; b.style.opacity = host || b.dataset.d===diff ? '' : '.55'; });
+  document.getElementById('lobbyDiffDesc').textContent = t({easy:'diffEasy',normal:'diffNormal',hard:'diffHard'}[diff]);
+  document.getElementById('lobbyHint').textContent = t(host ? 'lobbyHintHost' : 'lobbyHintGuest');
+  const st = document.getElementById('lobbyStart'); st.style.display = host ? '' : 'none';
+  st.disabled = seats.filter(Boolean).length < 2;
+  document.getElementById('copyLink').style.display = /^https?:/.test(location.protocol) ? '' : 'none';
+}
+
+/* ---------------- init ---------------- */
+document.getElementById('langKo').onclick = ()=>setLang('ko');
+document.getElementById('langEn').onclick = ()=>setLang('en');
+document.getElementById('soundBtn').onclick = toggleSound;
+document.getElementById('soundBtn').textContent = soundOn ? '🔊' : '🔇';
+document.getElementById('toSetup').onclick = ()=>show('setup');
+document.getElementById('toRules').onclick = ()=>{ rulesReturn='title'; show('rulesScr'); };
+document.getElementById('gameRules').onclick = ()=>{ rulesReturn='game'; show('rulesScr'); };
+document.getElementById('rulesBack').onclick = ()=>show(rulesReturn);
+document.getElementById('setupBack').onclick = ()=>show('title');
+document.getElementById('goBtn').onclick = startGame;
+document.getElementById('gameHome').onclick = ()=>{ if(NET.mode!=='off'){ leaveOnline(); show('title'); return; } G && (G.over=true); show('title'); };
+document.getElementById('bagBtn').onclick = ()=>drawShell();
+document.querySelectorAll('#diffSeg button').forEach(b=> b.onclick = ()=>{ sel.diff=b.dataset.d; updateDiffDesc(); });
+ATLAS.onload = ()=>{ if(G) drawBoard(); };
+document.fonts && document.fonts.ready.then(()=>{ if(G) drawBoard(); });
+/* online buttons */
+document.getElementById('toOnline').onclick = ()=>{ try{ document.getElementById('nickInput').value = localStorage.getItem('pirate_nick') || ''; }catch(e){} netMsg(''); show('onlineScr'); };
+document.getElementById('onlineBack').onclick = ()=>show('title');
+document.getElementById('createRoom').onclick = ()=>createRoom();
+document.getElementById('joinRoom').onclick = joinRoom;
+document.getElementById('codeInput').addEventListener('input', e=>{ e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''); });
+document.getElementById('codeInput').addEventListener('keydown', e=>{ if(e.key==='Enter') joinRoom(); });
+document.getElementById('lobbyLeave').onclick = ()=>{ leaveOnline(); show('title'); };
+document.getElementById('lobbyStart').onclick = ()=>{ if(NET.mode==='host') hostStartGame(); };
+document.querySelectorAll('#lobbyDiff button').forEach(b=> b.onclick = ()=>{ if(NET.mode==='host'){ NET.diff=b.dataset.d; broadcastLobby(); } });
+document.getElementById('copyLink').onclick = ()=>{
+  const url = location.origin + location.pathname + '?room=' + NET.code, btn = document.getElementById('copyLink');
+  const done = ()=>{ btn.textContent = t('copied'); setTimeout(()=>btn.textContent=t('copyLink'),1500); };
+  try{ navigator.clipboard.writeText(url).then(done,()=>{}); }catch(e){}
+};
+buildBoard(); titleArt(); applyLang();
+if(QS.get('room')){ document.getElementById('codeInput').value = QS.get('room').toUpperCase().slice(0,4); try{ document.getElementById('nickInput').value = localStorage.getItem('pirate_nick') || ''; }catch(e){} show('onlineScr'); }
+</script>
+</body>
+</html>
